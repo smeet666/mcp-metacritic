@@ -13,6 +13,10 @@
   "bugs": {
     "url": "https://github.com/smeet666/mcp-metacritic/issues"
   },
+  "funding": {
+    "type": "buymeacoffee",
+    "url": "https://buymeacoffee.com/smeet666"
+  },
   "mcpName": "io.github.smeet666/mcp-metacritic",
   "bin": {
     "mcp-metacritic": "dist/index.js"
