@@ -27,4 +27,14 @@ jobs:
       - run: npm run build
       # No NODE_AUTH_TOKEN: authentication comes from the OIDC token, so there
       # is no long-lived npm secret stored on this repository.
-      - run: npm publish --provenance --access public
+      # Re-tagging a released version must not fail the run: the publish is the
+      # side effect, and npm has it already.
+      - name: Publish unless npm already has this version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          name=$(node -p "require('./package.json').name")
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "npm already serves $name@$version; nothing to publish."
+          else
+            npm publish --provenance --access public
+          fi
