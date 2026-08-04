@@ -6,12 +6,12 @@
     "url": "https://github.com/smeet666/mcp-metacritic",
     "source": "github"
   },
-  "version": "1.0.0",
+  "version": "1.0.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "mcp-metacritic",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "transport": { "type": "stdio" },
       "environmentVariables": [
         {

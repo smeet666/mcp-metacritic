@@ -9,7 +9,7 @@
 import { z } from "zod";
 import type { McClient } from "../mc/client.js";
 import { McError } from "../errors.js";
-import type { Kind, ScoreSummary, TitleDetail } from "../types.js";
+import type { Kind, ScoreSummary, TitleDetail, WatchOffer } from "../types.js";
 import {
   ATTRIBUTION,
   kindSchema,
@@ -172,13 +172,14 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
       }
     }
     if (wanted.has("networks")) structured.networks = item.networks;
-    if (wanted.has("where_to_watch")) {
-      structured.where_to_watch = await watchOffers(client, item, args.kind, notes);
-    }
+    const offers = wanted.has("where_to_watch")
+      ? await watchOffers(client, item, args.kind, notes)
+      : [];
+    if (wanted.has("where_to_watch")) structured.where_to_watch = offers;
 
     return ok(
       structured,
-      render(item, slice, criticScore, userScore),
+      render(item, slice, criticScore, userScore, wanted, offers),
       `${ATTRIBUTION} — ${item.sourceUrl}`,
     );
   } catch (error) {
@@ -222,7 +223,7 @@ async function watchOffers(
   item: TitleDetail,
   kind: Kind,
   notes: string[],
-): Promise<unknown[]> {
+): Promise<WatchOffer[]> {
   if (kind === "game") {
     notes.push("Streaming offers do not apply to games.");
     return [];
@@ -240,11 +241,21 @@ async function watchOffers(
   }
 }
 
+/**
+ * The text block, built from the same sections the structured output was.
+ *
+ * A client that renders only text must see the answer to what it asked for and
+ * nothing it did not: showing genres when 'basic' was not requested contradicts
+ * the structured payload, and omitting the streaming offers hides a section the
+ * caller paid a request for.
+ */
 function render(
   item: TitleDetail,
   description: string,
   critic: ScoreSummary | null,
   user: ScoreSummary | null,
+  wanted: Set<Section>,
+  offers: WatchOffer[],
 ): string {
   // Some titles already carry their year, so it is only appended when absent.
   const yearShown = item.year !== null && !item.title.includes(`(${item.year})`);
@@ -253,7 +264,10 @@ function render(
     .join(" ");
 
   const lines = [header];
-  if (item.genres.length > 0) lines.push(`Genres: ${item.genres.join(", ")}`);
+  if (wanted.has("basic")) {
+    if (item.genres.length > 0) lines.push(`Genres: ${item.genres.join(", ")}`);
+    if (item.duration !== null) lines.push(`Runtime: ${item.duration} min`);
+  }
   if (critic?.score !== null && critic !== null) {
     lines.push(
       `Critics: ${critic.score}/${critic.max} from ${critic.reviewCount ?? "?"} reviews${critic.sentiment ? ` (${critic.sentiment})` : ""}`,
@@ -265,5 +279,28 @@ function render(
     );
   }
   if (description) lines.push("", description);
+
+  if (wanted.has("awards") && item.awards.length > 0) {
+    lines.push("", "Awards:");
+    for (const a of item.awards) {
+      const tally = [
+        a.wins === null ? "" : `${a.wins} win${a.wins === 1 ? "" : "s"}`,
+        a.nominations === null
+          ? ""
+          : `${a.nominations} nomination${a.nominations === 1 ? "" : "s"}`,
+      ].filter(Boolean);
+      lines.push(`  ${a.ceremony}${tally.length > 0 ? `: ${tally.join(", ")}` : ""}`);
+    }
+  }
+
+  if (wanted.has("networks") && item.networks.length > 0) {
+    lines.push("", `Networks: ${item.networks.join(", ")}`);
+  }
+
+  if (wanted.has("where_to_watch")) {
+    lines.push("", offers.length === 0 ? "Where to watch: nothing listed." : "Where to watch:");
+    for (const o of offers) lines.push(`  ${o.provider} (${o.kind})${o.url ? ` — ${o.url}` : ""}`);
+  }
+
   return lines.join("\n");
 }

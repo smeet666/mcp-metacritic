@@ -1,6 +1,12 @@
-# Changelog
+# Changelog\n\n## 1.0.1
 
-## 1.0.0
+- Build the text block from the same sections as the structured output. It
+  printed the genres even when 'basic' had not been requested, contradicting a
+  payload that correctly returned none, and it never printed the streaming
+  offers at all: a client rendering only text paid an extra request for
+  'where_to_watch' and saw nothing come back. Awards and networks are rendered
+  too, and the runtime alongside the genres.
+  \n 1.0.0
 
 First stable release. The tool contracts are settled: tool names, argument names
 and the shape of the structured output will not change without a major version.
