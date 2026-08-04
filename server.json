@@ -2,17 +2,32 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.smeet666/mcp-metacritic",
   "description": "Search Metacritic films, shows and games, read scores and critic reviews. No API key.",
+  "websiteUrl": "https://github.com/smeet666/mcp-metacritic#readme",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/smeet666/mcp-metacritic/main/assets/icon-128.png",
+      "mimeType": "image/png",
+      "sizes": ["128x128"]
+    },
+    {
+      "src": "https://raw.githubusercontent.com/smeet666/mcp-metacritic/main/assets/icon-512.png",
+      "mimeType": "image/png",
+      "sizes": ["512x512"]
+    }
+  ],
   "repository": {
     "url": "https://github.com/smeet666/mcp-metacritic",
     "source": "github"
   },
-  "version": "1.0.2",
+  "version": "1.0.3",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "mcp-metacritic",
-      "version": "1.0.2",
-      "transport": { "type": "stdio" },
+      "version": "1.0.3",
+      "transport": {
+        "type": "stdio"
+      },
       "environmentVariables": [
         {
           "name": "MC_USER_AGENT",

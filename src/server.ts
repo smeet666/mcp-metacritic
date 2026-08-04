@@ -7,6 +7,7 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
 import type { Config, Logger } from "./config.js";
 import { createLogger, loadConfig } from "./config.js";
 import { McClient } from "./mc/client.js";
@@ -86,8 +87,8 @@ export function createServer(options: CreateServerOptions = {}): McpServer {
     {
       title: "Search Metacritic",
       description: searchTitlesDescription,
-      inputSchema: searchTitlesInputShape,
-      outputSchema: searchTitlesOutputShape,
+      inputSchema: z.object(searchTitlesInputShape),
+      outputSchema: z.object(searchTitlesOutputShape),
       annotations: READ_ONLY,
     },
     async (args) => runSearchTitles(client, args as SearchTitlesArgs),
@@ -98,8 +99,8 @@ export function createServer(options: CreateServerOptions = {}): McpServer {
     {
       title: "Read an entry",
       description: getTitleDescription,
-      inputSchema: getTitleInputShape,
-      outputSchema: getTitleOutputShape,
+      inputSchema: z.object(getTitleInputShape),
+      outputSchema: z.object(getTitleOutputShape),
       annotations: READ_ONLY,
     },
     async (args) => runGetTitle(client, args as GetTitleArgs),
@@ -110,8 +111,8 @@ export function createServer(options: CreateServerOptions = {}): McpServer {
     {
       title: "Read reviews",
       description: getReviewsDescription,
-      inputSchema: getReviewsInputShape,
-      outputSchema: getReviewsOutputShape,
+      inputSchema: z.object(getReviewsInputShape),
+      outputSchema: z.object(getReviewsOutputShape),
       annotations: READ_ONLY,
     },
     async (args) => runGetReviews(client, args as GetReviewsArgs),
@@ -122,8 +123,8 @@ export function createServer(options: CreateServerOptions = {}): McpServer {
     {
       title: "Browse rankings",
       description: browseTitlesDescription,
-      inputSchema: browseTitlesInputShape,
-      outputSchema: browseTitlesOutputShape,
+      inputSchema: z.object(browseTitlesInputShape),
+      outputSchema: z.object(browseTitlesOutputShape),
       annotations: READ_ONLY,
     },
     async (args) => runBrowseTitles(client, args as BrowseTitlesArgs),

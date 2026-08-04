@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.3
+
+Housekeeping, with no change to what any tool returns.
+
+- Declare the tool schemas as objects rather than as the raw shape the SDK now
+  deprecates. The emitted `tools/list` is byte for byte what it was.
+- Add an icon and a `websiteUrl` to `server.json`, so the registry has something
+  to show next to the entry.
+
 ## 1.0.2
 
 - Carry the notes into the text block of every tool. They are what qualifies an
