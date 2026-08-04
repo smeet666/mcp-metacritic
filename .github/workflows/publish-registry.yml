@@ -25,6 +25,35 @@ jobs:
           curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/').tar.gz" \
             | tar xz mcp-publisher
           sudo mv mcp-publisher /usr/local/bin/
+      # fileSha256 is required for an MCPB package and cannot exist before the
+      # bundle does, so it is filled in here from the file the release carries
+      # rather than committed as a value that would go stale on every build.
+      - name: Stamp the bundle hash into server.json
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./server.json').version")
+          asset="${{ github.event.repository.name }}-$version.mcpb"
+          if gh release download "v$version" --pattern "$asset" --dir . 2>/dev/null; then
+            sha=$(sha256sum "$asset" | cut -d" " -f1)
+            node -e "
+              const fs = require('fs');
+              const doc = JSON.parse(fs.readFileSync('server.json', 'utf8'));
+              for (const pkg of doc.packages ?? []) {
+                if (pkg.registryType === 'mcpb') pkg.fileSha256 = '$sha';
+              }
+              fs.writeFileSync('server.json', JSON.stringify(doc, null, 2) + '\n');
+            "
+            echo "Stamped $sha."
+          else
+            echo "No bundle on the release; dropping the mcpb package from this publish."
+            node -e "
+              const fs = require('fs');
+              const doc = JSON.parse(fs.readFileSync('server.json', 'utf8'));
+              doc.packages = (doc.packages ?? []).filter((p) => p.registryType !== 'mcpb');
+              fs.writeFileSync('server.json', JSON.stringify(doc, null, 2) + '\n');
+            "
+          fi
       - run: mcp-publisher login github-oidc
       # Same reason as the npm step: a tag can be recreated, and the registry
       # rejects a duplicate version rather than treating it as a no-op.

@@ -1,0 +1,65 @@
+{
+  "manifest_version": "0.3",
+  "name": "mcp-metacritic",
+  "display_name": "Metacritic",
+  "version": "1.1.0",
+  "description": "MCP server for Metacritic. Search films, shows and games, read Metascores and critic reviews with attribution. No API key required.",
+  "long_description": "Search films, shows and games, read Metascores and the critic reviews behind them. No API key, no account.",
+  "author": {
+    "name": "Damien Bouissou",
+    "url": "https://github.com/smeet666"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smeet666/mcp-metacritic.git"
+  },
+  "homepage": "https://github.com/smeet666/mcp-metacritic#readme",
+  "documentation": "https://github.com/smeet666/mcp-metacritic#readme",
+  "support": "https://github.com/smeet666/mcp-metacritic/issues",
+  "icon": "assets/icon-512.png",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "model-context-protocol",
+    "mcp-server",
+    "metacritic",
+    "metascore",
+    "movies",
+    "tv",
+    "games",
+    "reviews"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"]
+    }
+  },
+  "tools": [
+    {
+      "name": "search_titles",
+      "description": "Find films, shows and games by title."
+    },
+    {
+      "name": "get_title",
+      "description": "Read one entry, section by section."
+    },
+    {
+      "name": "get_reviews",
+      "description": "Read individual critic or audience reviews, with attribution."
+    },
+    {
+      "name": "browse_titles",
+      "description": "List by score, release date or current popularity."
+    }
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=20.0.0"
+    }
+  }
+}

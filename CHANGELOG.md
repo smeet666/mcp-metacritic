@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.1.0
+
+- Ship a `.mcpb` bundle on every release, so the server can be installed by
+  opening a file rather than by having npm and a client configuration. The
+  dependencies are compiled into a single file, which makes the bundle 164 kB
+  and five files instead of 3 MB and two thousand: a bundle is unpacked, not
+  resolved, so a copy of `node_modules` would only be dead weight. The npm build
+  still keeps its dependencies external, and the two builds are separate
+  configurations for that reason.
+- Declare the bundle in `server.json`, with the hash the registry requires
+  computed from the released file at publish time rather than committed as a
+  value that goes stale on every build.
+
 ## 1.0.3
 
 Housekeeping, with no change to what any tool returns.
