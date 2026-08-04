@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Not sure it is a bug?
+    url: https://github.com/smeet666/mcp-metacritic/issues/new
+    about: Open a blank issue and describe what you saw. Questions are welcome.

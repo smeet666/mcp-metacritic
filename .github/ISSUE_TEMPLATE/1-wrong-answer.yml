@@ -1,0 +1,44 @@
+name: Wrong or misleading answer
+description: A tool answered, but the answer is not right.
+labels: [correctness]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the report that matters most here. An answer that is confidently
+        wrong is worse than an error, because nothing downstream can tell.
+  - type: input
+    id: tool
+    attributes:
+      label: Which tool
+      placeholder: search_titles
+    validations:
+      required: true
+  - type: textarea
+    id: arguments
+    attributes:
+      label: Arguments you passed
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: got
+    attributes:
+      label: What came back
+      description: Paste the result. The text block and the structured output if you have both.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What it should have said, and how you know
+      description: A link to the Metacritic page is usually the shortest proof.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "`npm ls -g mcp-metacritic`, or the version your client reports."
+    validations:
+      required: true

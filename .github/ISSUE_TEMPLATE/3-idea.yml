@@ -1,0 +1,32 @@
+name: Idea or missing capability
+description: Something you want to ask Metacritic that this server cannot answer today.
+labels: [idea]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the question you wanted answered rather than the tool or the
+        field you think it needs. The shape of the answer is the part worth
+        discussing, and it is easier to get right before the code exists.
+  - type: textarea
+    id: question
+    attributes:
+      label: What do you want to ask, and in what situation
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: What you have to do today instead
+      description: Several calls, a manual step, another source, or nothing at all.
+  - type: textarea
+    id: source
+    attributes:
+      label: Where the data lives on Metacritic
+      description: A link to a page that shows it, if you know one.
+  - type: checkboxes
+    id: offer
+    attributes:
+      label: Would you like to write it?
+      options:
+        - label: I would, once we agree on the shape.

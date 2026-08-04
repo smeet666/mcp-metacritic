@@ -1,0 +1,44 @@
+name: Bug or error
+description: A tool failed, crashed, or returned an error you did not expect.
+labels: [bug]
+body:
+  - type: input
+    id: tool
+    attributes:
+      label: Which tool
+      placeholder: search_titles
+    validations:
+      required: true
+  - type: textarea
+    id: arguments
+    attributes:
+      label: Arguments you passed
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: got
+    attributes:
+      label: What happened
+      description: |
+        Paste the error. If it carries a code such as `not_found`, `rate_limited`,
+        `parse_failure` or `network_error`, keep it: they mean different things.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Server logs, if you have them
+      description: "Set `MC_LOG_LEVEL=debug` and rerun. Logs go to stderr."
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: Version
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      placeholder: Claude Code, Claude Desktop, MCP Inspector, your own

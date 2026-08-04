@@ -167,6 +167,14 @@ Metacritic and link the entry: every result carries a `source_url`.
 This is an unofficial project, with no affiliation to or endorsement by
 Metacritic or Fandom.
 
+## Contributing
+
+Bugs, questions and ideas all belong in
+[the issue tracker](https://github.com/smeet666/mcp-metacritic/issues). Pull requests
+are welcome; please open an issue first so we can agree on what the right
+answer is before you write it. [CONTRIBUTING.md](CONTRIBUTING.md) has the
+detail, and [SECURITY.md](SECURITY.md) covers anything exploitable.
+
 ## License
 
 MIT. See [LICENSE](./LICENSE). The license covers this source code only, not the
