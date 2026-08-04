@@ -162,7 +162,15 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
     };
 
     if (wanted.has("awards")) structured.awards = item.awards;
-    if (wanted.has("production")) structured.production = item.production;
+    if (wanted.has("production")) {
+      const CAP = 25;
+      structured.production = item.production.slice(0, CAP);
+      if (item.production.length > CAP) {
+        notes.push(
+          `${item.production.length} companies are credited and the first ${CAP} are shown. The list mixes producers with distributors and home-video labels across every territory.`,
+        );
+      }
+    }
     if (wanted.has("networks")) structured.networks = item.networks;
     if (wanted.has("where_to_watch")) {
       structured.where_to_watch = await watchOffers(client, item, args.kind, notes);

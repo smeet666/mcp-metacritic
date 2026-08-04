@@ -69,8 +69,9 @@ export function createServer(options: CreateServerOptions = {}): McpServer {
       instructions:
         "Tools for Metacritic: films, shows and games, their scores, and the reviews behind them. " +
         "No API key is needed. Typical flow: search_titles to find an entry and its slug and kind, " +
-        "then get_title for the entry or get_reviews for what critics wrote. search_titles already " +
-        "returns both scores, so a question about a rating alone often needs no second call. " +
+        "then get_title for the entry or get_reviews for what critics wrote. search_titles carries " +
+        "the critic Metascore, so a question about the critical verdict needs no second call, but " +
+        "it carries no audience score: read that with get_title, or with browse_titles. " +
         "The two scores are on different scales: the critic Metascore runs to 100 and the audience " +
         "score to 10, so never compare or average them without rescaling; every score is returned " +
         "with its own 'max' for that reason. " +

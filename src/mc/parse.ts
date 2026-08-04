@@ -154,13 +154,28 @@ export function parseTitlePage(raw: string, url: string, what: string): TitlePag
   };
 }
 
+/**
+ * Companies attached to a title, deduplicated by name.
+ *
+ * The list mixes producers with every distributor, broadcaster and home-video
+ * label in every territory, so a well-travelled film carries the same name a
+ * dozen times under different ids: Blade Runner lists 128 entries of which
+ * "Warner Home Video" is fifteen. The first id for a name is kept, since they
+ * differ only by the release they were attached to.
+ */
 function toCompanies(value: unknown): Company[] {
   const source = isObject(value) ? value.companies : value;
   if (!Array.isArray(source)) return [];
+
+  const seen = new Set<string>();
   const out: Company[] = [];
   for (const node of source) {
     const name = isObject(node) ? str(node.name) : str(node);
-    if (name) out.push({ name, id: isObject(node) ? intOf(node.id) : null });
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ name, id: isObject(node) ? intOf(node.id) : null });
   }
   return out;
 }
