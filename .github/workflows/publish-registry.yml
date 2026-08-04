@@ -26,4 +26,16 @@ jobs:
             | tar xz mcp-publisher
           sudo mv mcp-publisher /usr/local/bin/
       - run: mcp-publisher login github-oidc
-      - run: mcp-publisher publish
+      # Same reason as the npm step: a tag can be recreated, and the registry
+      # rejects a duplicate version rather than treating it as a no-op.
+      - name: Publish unless the registry already has this version
+        run: |
+          name=$(node -p "require('./server.json').name")
+          version=$(node -p "require('./server.json').version")
+          published=$(curl -sf "https://registry.modelcontextprotocol.io/v0/servers?search=$name" \
+            | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).servers.map(r => (r.server||r).version).join(' ')")
+          if echo " $published " | grep -q " $version "; then
+            echo "The registry already serves $name $version; nothing to publish."
+          else
+            mcp-publisher publish
+          fi
