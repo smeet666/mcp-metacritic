@@ -109,7 +109,9 @@ export async function runSearchTitles(
         ? `No Metacritic entry matched "${args.query}".`
         : `${results.length} entr${results.length === 1 ? "y" : "ies"} for "${args.query}":\n${renderTitleList(results)}`;
 
-    return ok({ query: args.query, results, total_available: data.totalResults, notes }, summary);
+    return ok({ query: args.query, results, total_available: data.totalResults, notes }, summary, {
+      notes,
+    });
   } catch (error) {
     return toToolError(error);
   }

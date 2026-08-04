@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.2
+
+- Carry the notes into the text block of every tool. They are what qualifies an
+  answer: that a list was capped, that a score could not be read and is missing
+  rather than absent, that streaming offers do not apply to a game, that a
+  description continues at a further offset. A client rendering only the text
+  read the unqualified answer, so `get_title` on a game showed "Where to watch:
+  nothing listed" with nothing to say the section does not apply, and a cut
+  description ended with no sign there was more. The notes sit alongside the
+  attribution so they survive truncation, and a long run of them is trimmed from
+  the tail rather than crowding out the answer.
+- Render `production` in the text block. The section was returned in the
+  structured output and nowhere in the text.
+
 ## 1.0.1
 
 - Build the text block from the same sections as the structured output. It

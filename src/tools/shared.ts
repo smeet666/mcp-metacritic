@@ -87,12 +87,18 @@ export interface ToolResult {
 }
 
 /**
- * Build a result whose text block always ends with its attribution.
+ * Build a result whose text block always ends with its notes and attribution.
  *
  * The body is truncated to fit around the trailer rather than the whole block
  * being cut afterwards. Appending the credit and then truncating loses exactly
  * the credit, which is the one line that must survive: a client rendering only
  * the text would otherwise show third-party review quotes with no source.
+ *
+ * The notes belong to the trailer for the same reason. They are what qualifies
+ * the answer, saying that a list was capped, that a score could not be read, or
+ * that a section does not apply to this kind of entry. A client rendering only
+ * the text reads an unqualified answer without them, which is the failure this
+ * server exists to avoid.
  *
  * The trailer also states that the text was shortened, since a client that
  * cannot read `structuredContent` has no other way to know rows are missing.
@@ -100,8 +106,17 @@ export interface ToolResult {
 export function ok(
   structured: Record<string, unknown>,
   body: string,
-  trailer = ATTRIBUTION,
+  options: { notes?: string[]; sourceUrl?: string } = {},
 ): ToolResult {
+  const attribution = options.sourceUrl ? `${ATTRIBUTION} — ${options.sourceUrl}` : ATTRIBUTION;
+  // A run of notes must never crowd out the answer they qualify, so they are
+  // dropped from the tail until the body keeps a readable share of the block.
+  const noteLines = (options.notes ?? []).map((note) => `Note: ${note}`);
+  while (noteLines.length > 0 && noteLines.join("\n").length > MAX_TEXT_MIRROR_CHARS / 2) {
+    noteLines.pop();
+  }
+  const trailer = [...noteLines, attribution].join("\n");
+
   const cutMarker = "\n\n[shortened; the full result is in the structured output]";
   const reserved = `\n\n${trailer}`.length;
   const budget = MAX_TEXT_MIRROR_CHARS - reserved;

@@ -513,9 +513,10 @@ describe("the text mirror", () => {
       "the whole block, trailer included, stays within budget",
     ).toBeLessThanOrEqual(2000);
     expect(text.length, "this test is pointless if the body fitted anyway").toBeGreaterThan(1500);
-    expect(text.endsWith("Source: Metacritic"), "the credit is the line that must survive").toBe(
-      true,
-    );
+    expect(
+      text.trimEnd().split("\n").at(-1)?.startsWith("Source: Metacritic"),
+      "the credit is the line that must survive",
+    ).toBe(true);
   });
 
   it("says it was shortened, since a text-only client cannot see what is missing", async () => {
@@ -544,6 +545,33 @@ describe("the text mirror", () => {
     expect(text.length).toBeLessThanOrEqual(2000);
     expect(text.endsWith("https://www.metacritic.com/movie/blue-horizon/")).toBe(true);
     expect(text).toContain("Source: Metacritic");
+  });
+
+  it("carries the notes into the text, not only into the structured payload", async () => {
+    const result: any = await client.callTool({
+      name: "get_title",
+      arguments: { slug: "cinder-vale", kind: "game", sections: ["where_to_watch"] },
+    });
+
+    const text = textOf(result);
+    expect(result.structuredContent.where_to_watch).toEqual([]);
+    // Without the reason, "nothing listed" reads as "nothing streams it".
+    for (const note of result.structuredContent.notes as string[]) {
+      expect(text, `note missing from the mirror: ${note}`).toContain(note);
+    }
+    expect(text).toContain("Where to watch");
+  });
+
+  it("renders every section it was asked for, production included", async () => {
+    const result: any = await client.callTool({
+      name: "get_title",
+      arguments: { slug: "blue-horizon", kind: "movie", sections: ["production"] },
+    });
+
+    const text = textOf(result);
+    for (const company of result.structuredContent.production as Array<{ name: string }>) {
+      expect(text, `company missing from the mirror: ${company.name}`).toContain(company.name);
+    }
   });
 
   it("indents third-party quotes so they cannot read as the server's own words", async () => {

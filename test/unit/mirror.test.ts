@@ -54,11 +54,31 @@ describe("ok()", () => {
   });
 
   it("makes room for a longer trailer rather than overrunning the budget", () => {
-    const trailer = `${ATTRIBUTION} — https://www.metacritic.com/movie/blue-horizon/`;
-    const text = textOf(ok({}, longBody(10_000), trailer));
+    const sourceUrl = "https://www.metacritic.com/movie/blue-horizon/";
+    const text = textOf(ok({}, longBody(10_000), { sourceUrl }));
 
     expect(text.length).toBeLessThanOrEqual(MAX_TEXT_MIRROR_CHARS);
-    expect(text.endsWith(trailer)).toBe(true);
+    expect(text.endsWith(`${ATTRIBUTION} — ${sourceUrl}`)).toBe(true);
+  });
+
+  it("carries the notes into the text, since they are what qualifies the answer", () => {
+    const notes = ["The list was capped at 25 entries.", "The user score could not be read."];
+    const text = textOf(ok({}, longBody(10_000), { notes }));
+
+    expect(text.length).toBeLessThanOrEqual(MAX_TEXT_MIRROR_CHARS);
+    for (const note of notes) expect(text).toContain(note);
+    expect(text.endsWith(ATTRIBUTION)).toBe(true);
+  });
+
+  it("drops the tail of a run of notes rather than crowding out the answer", () => {
+    const notes = Array.from({ length: 40 }, (_, index) => `${"n".repeat(120)} ${index}`);
+    const text = textOf(ok({}, longBody(10_000), { notes }));
+
+    expect(text.length).toBeLessThanOrEqual(MAX_TEXT_MIRROR_CHARS);
+    expect(text).toContain(notes[0] as string);
+    expect(text).not.toContain(notes[39] as string);
+    const body = text.split("\n\n")[0] ?? "";
+    expect(body.length, "the body keeps a readable share").toBeGreaterThan(500);
   });
 
   it("hands the structured payload through untouched", () => {

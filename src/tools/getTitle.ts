@@ -11,7 +11,6 @@ import type { McClient } from "../mc/client.js";
 import { McError } from "../errors.js";
 import type { Kind, ScoreSummary, TitleDetail, WatchOffer } from "../types.js";
 import {
-  ATTRIBUTION,
   kindSchema,
   ok,
   scoreSchema,
@@ -162,26 +161,28 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
     };
 
     if (wanted.has("awards")) structured.awards = item.awards;
+
+    const PRODUCTION_CAP = 25;
+    const production = wanted.has("production") ? item.production.slice(0, PRODUCTION_CAP) : [];
     if (wanted.has("production")) {
-      const CAP = 25;
-      structured.production = item.production.slice(0, CAP);
-      if (item.production.length > CAP) {
+      structured.production = production;
+      if (item.production.length > PRODUCTION_CAP) {
         notes.push(
-          `${item.production.length} companies are credited and the first ${CAP} are shown. The list mixes producers with distributors and home-video labels across every territory.`,
+          `${item.production.length} companies are credited and the first ${PRODUCTION_CAP} are shown. The list mixes producers with distributors and home-video labels across every territory.`,
         );
       }
     }
+
     if (wanted.has("networks")) structured.networks = item.networks;
     const offers = wanted.has("where_to_watch")
       ? await watchOffers(client, item, args.kind, notes)
       : [];
     if (wanted.has("where_to_watch")) structured.where_to_watch = offers;
 
-    return ok(
-      structured,
-      render(item, slice, criticScore, userScore, wanted, offers),
-      `${ATTRIBUTION} — ${item.sourceUrl}`,
-    );
+    return ok(structured, render(item, slice, criticScore, userScore, wanted, offers, production), {
+      notes,
+      sourceUrl: item.sourceUrl,
+    });
   } catch (error) {
     return toToolError(error);
   }
@@ -256,6 +257,7 @@ function render(
   user: ScoreSummary | null,
   wanted: Set<Section>,
   offers: WatchOffer[],
+  production: Array<{ name: string }>,
 ): string {
   // Some titles already carry their year, so it is only appended when absent.
   const yearShown = item.year !== null && !item.title.includes(`(${item.year})`);
@@ -295,6 +297,15 @@ function render(
 
   if (wanted.has("networks") && item.networks.length > 0) {
     lines.push("", `Networks: ${item.networks.join(", ")}`);
+  }
+
+  if (wanted.has("production")) {
+    lines.push(
+      "",
+      production.length === 0
+        ? "Production: no company credited."
+        : `Production: ${production.map((company) => company.name).join(", ")}`,
+    );
   }
 
   if (wanted.has("where_to_watch")) {

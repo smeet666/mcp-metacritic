@@ -187,6 +187,7 @@ export async function runGetReviews(client: McClient, args: GetReviewsArgs): Pro
         notes,
       },
       summary,
+      { notes, sourceUrl },
     );
   } catch (error) {
     return toToolError(error);

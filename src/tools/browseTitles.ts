@@ -128,6 +128,7 @@ export async function runBrowseTitles(
         notes,
       },
       summary,
+      { notes },
     );
   } catch (error) {
     return toToolError(error);
