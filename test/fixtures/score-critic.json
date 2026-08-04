@@ -1,0 +1,20 @@
+{
+  "data": {
+    "item": {
+      "score": 73,
+      "max": 100,
+      "reviewCount": 36,
+      "positiveCount": 30,
+      "neutralCount": 5,
+      "negativeCount": 1,
+      "sentiment": "Generally favorable",
+      "__noise": {
+        "distribution": [
+          1,
+          5,
+          30
+        ]
+      }
+    }
+  }
+}

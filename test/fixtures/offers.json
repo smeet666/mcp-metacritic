@@ -1,0 +1,37 @@
+{
+  "data": {
+    "item": {
+      "hasOffers": true,
+      "rent": [
+        {
+          "providerId": 538,
+          "providerName": "Lantern Video",
+          "providerIcon": "https://images.example.invalid/icon/301832745/s100",
+          "link": "https://click.example-tracker.invalid/a?cx=eyJzY2hlbWEiOiJpZ2x1OmludmFsaWQuZXhhbXBsZS9jbGlja291dF9jb250ZXh0L2pzb25zY2hlbWEvMS0zLTIiLCJkYXRhIjp7InByb3ZpZGVyIjoiTGFudGVybiBWaWRlbyIsIm1vbmV0aXphdGlvblR5cGUiOiJyZW50IiwicHJlc2VudGF0aW9uVHlwZSI6ImhkIiwiY3VycmVuY3kiOiJVU0QiLCJwcmljZSI6My45OSwicGFydG5lcklkIjoxMDUxLCJwcm92aWRlcklkIjo1MzgsInN1cmZhY2UiOiJ3ZWIiLCJub3RlIjoicGFkZGluZyB0aGF0IGV4aXN0cyBzbyB0aGlzIGxpbmsgaXMgYXMgbG9uZyBhcyB0aGUgcmVhbCB0aGluZyJ9fQ==&r=https%3A%2F%2Fwatch.example.invalid%2Ftitle&uct_country=US&sid=mcp",
+          "price": "3.99",
+          "currency": "USD"
+        },
+        {
+          "providerId": 612,
+          "providerName": "Coastline Store",
+          "link": "https://example.invalid/coastline/blue-horizon",
+          "price": "4.49",
+          "currency": "USD"
+        }
+      ],
+      "free": [],
+      "buy": [
+        {
+          "providerId": 538,
+          "providerName": "Lantern Video",
+          "link": "https://click.example-tracker.invalid/a?cx=eyJzY2hlbWEiOiJpZ2x1OmludmFsaWQuZXhhbXBsZS9jbGlja291dF9jb250ZXh0L2pzb25zY2hlbWEvMS0zLTIiLCJkYXRhIjp7InByb3ZpZGVyIjoiTGFudGVybiBWaWRlbyIsIm1vbmV0aXphdGlvblR5cGUiOiJyZW50IiwicHJlc2VudGF0aW9uVHlwZSI6ImhkIiwiY3VycmVuY3kiOiJVU0QiLCJwcmljZSI6My45OSwicGFydG5lcklkIjoxMDUxLCJwcm92aWRlcklkIjo1MzgsInN1cmZhY2UiOiJ3ZWIiLCJub3RlIjoicGFkZGluZyB0aGF0IGV4aXN0cyBzbyB0aGlzIGxpbmsgaXMgYXMgbG9uZyBhcyB0aGUgcmVhbCB0aGluZyJ9fQ==&r=https%3A%2F%2Fwatch.example.invalid%2Ftitle%2Fbuy&uct_country=US&sid=mcp",
+          "price": "12.99",
+          "currency": "USD"
+        }
+      ],
+      "__noise": {
+        "updatedAt": "2024-01-01"
+      }
+    }
+  }
+}

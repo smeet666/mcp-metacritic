@@ -1,0 +1,194 @@
+{
+  "data": {
+    "totalResults": 17,
+    "itemsPerPage": 10,
+    "links": {
+      "self": {
+        "href": "/finder/metacritic/search/lantern/web"
+      }
+    },
+    "items": [
+      {
+        "id": 2000100001,
+        "type": "movie",
+        "typeId": 2,
+        "title": "Blue Horizon",
+        "slug": "blue-horizon",
+        "premiereYear": 2011,
+        "releaseDate": "2011-09-30",
+        "rating": "R",
+        "criticScoreSummary": {
+          "score": 81,
+          "url": "/movie/blue-horizon/critic-reviews/",
+          "max": 100
+        },
+        "description": "A lighthouse keeper counts the ships that never come back, and starts writing to one of them.",
+        "genres": [
+          {
+            "id": 4,
+            "name": "Neo-Noir"
+          },
+          {
+            "id": 7,
+            "name": "Drama"
+          }
+        ],
+        "duration": "1 h 52 m",
+        "platforms": [],
+        "images": [
+          {
+            "filename": "blue-horizon-poster-1440x2160.jpg",
+            "height": 2160,
+            "width": 1440,
+            "alt": "blue-horizon poster",
+            "bucketType": "poster",
+            "bucketPath": "/a/img/catalog/provider/blue-horizon/1440x2160.jpg"
+          },
+          {
+            "filename": "blue-horizon-still-1920x1080.jpg",
+            "height": 1080,
+            "width": 1920,
+            "alt": "blue-horizon still",
+            "bucketType": "backdrop",
+            "bucketPath": "/a/img/catalog/provider/blue-horizon/1920x1080.jpg"
+          }
+        ],
+        "__noise": "field the parser must ignore"
+      },
+      {
+        "id": 2000100002,
+        "type": "show",
+        "typeId": 1,
+        "title": "Paper Lanterns",
+        "slug": "paper-lanterns",
+        "premiereYear": 2018,
+        "releaseDate": "2018-02-14",
+        "rating": "TV-MA",
+        "criticScoreSummary": {
+          "score": 67,
+          "url": "/tv/paper-lanterns/critic-reviews/",
+          "max": 100
+        },
+        "description": "Three sisters run a failing print shop in a town that floods every spring.",
+        "genres": [
+          {
+            "id": 7,
+            "name": "Drama"
+          }
+        ],
+        "duration": "45 m",
+        "platforms": [],
+        "images": [
+          {
+            "filename": "paper-lanterns-poster-1440x2160.jpg",
+            "height": 2160,
+            "width": 1440,
+            "alt": "paper-lanterns poster",
+            "bucketType": "poster",
+            "bucketPath": "/a/img/catalog/provider/paper-lanterns/1440x2160.jpg"
+          },
+          {
+            "filename": "paper-lanterns-still-1920x1080.jpg",
+            "height": 1080,
+            "width": 1920,
+            "alt": "paper-lanterns still",
+            "bucketType": "backdrop",
+            "bucketPath": "/a/img/catalog/provider/paper-lanterns/1920x1080.jpg"
+          }
+        ],
+        "__noise": "field the parser must ignore"
+      },
+      {
+        "id": 2000100003,
+        "type": "game-title",
+        "typeId": 13,
+        "title": "Cinder Vale",
+        "slug": "cinder-vale",
+        "premiereYear": 2023,
+        "releaseDate": "2023-11-07",
+        "rating": "M",
+        "criticScoreSummary": {
+          "score": 88,
+          "url": "/game/cinder-vale/critic-reviews/",
+          "max": 100
+        },
+        "description": "A survival game about rebuilding a valley after the ash falls.",
+        "genres": [
+          {
+            "id": 12,
+            "name": "Survival"
+          }
+        ],
+        "duration": null,
+        "platforms": [
+          {
+            "id": 3,
+            "name": "PC"
+          },
+          {
+            "id": 9,
+            "name": "PlayStation 5"
+          }
+        ],
+        "images": [
+          {
+            "filename": "cinder-vale-poster-1440x2160.jpg",
+            "height": 2160,
+            "width": 1440,
+            "alt": "cinder-vale poster",
+            "bucketType": "poster",
+            "bucketPath": "/a/img/catalog/provider/cinder-vale/1440x2160.jpg"
+          },
+          {
+            "filename": "cinder-vale-still-1920x1080.jpg",
+            "height": 1080,
+            "width": 1920,
+            "alt": "cinder-vale still",
+            "bucketType": "backdrop",
+            "bucketPath": "/a/img/catalog/provider/cinder-vale/1920x1080.jpg"
+          }
+        ],
+        "__noise": "field the parser must ignore"
+      },
+      {
+        "id": 2000100004,
+        "type": "movie",
+        "typeId": 2,
+        "title": "The Salt Road",
+        "slug": "the-salt-road",
+        "premiereYear": 1997,
+        "releaseDate": "1997-06-20",
+        "rating": null,
+        "criticScoreSummary": {},
+        "description": "A caravan crosses a desert that is no longer on any map.",
+        "genres": [
+          {
+            "id": 2,
+            "name": "Adventure"
+          }
+        ],
+        "duration": "2 h 06 m",
+        "platforms": [],
+        "images": [
+          {
+            "filename": "the-salt-road-poster-1440x2160.jpg",
+            "height": 2160,
+            "width": 1440,
+            "alt": "the-salt-road poster",
+            "bucketType": "poster",
+            "bucketPath": "/a/img/catalog/provider/the-salt-road/1440x2160.jpg"
+          },
+          {
+            "filename": "the-salt-road-still-1920x1080.jpg",
+            "height": 1080,
+            "width": 1920,
+            "alt": "the-salt-road still",
+            "bucketType": "backdrop",
+            "bucketPath": "/a/img/catalog/provider/the-salt-road/1920x1080.jpg"
+          }
+        ],
+        "__noise": "field the parser must ignore"
+      }
+    ]
+  }
+}

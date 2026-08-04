@@ -1,0 +1,97 @@
+{
+  "data": {
+    "totalResults": 90,
+    "items": [
+      {
+        "id": 2000100001,
+        "type": "movie",
+        "typeId": 2,
+        "title": "Blue Horizon",
+        "slug": "blue-horizon",
+        "premiereYear": 2019,
+        "releaseDate": "2019-05-03",
+        "rating": "R",
+        "criticScoreSummary": {
+          "score": 81,
+          "max": 100
+        },
+        "description": "No description.",
+        "genres": [
+          {
+            "id": 1,
+            "name": "Drama"
+          }
+        ],
+        "duration": "1 h 40 m",
+        "platforms": [],
+        "images": [
+          {
+            "filename": "untitled-poster-1440x2160.jpg",
+            "height": 2160,
+            "width": 1440,
+            "alt": "untitled poster",
+            "bucketType": "poster",
+            "bucketPath": "/a/img/catalog/provider/untitled/1440x2160.jpg"
+          },
+          {
+            "filename": "untitled-still-1920x1080.jpg",
+            "height": 1080,
+            "width": 1920,
+            "alt": "untitled still",
+            "bucketType": "backdrop",
+            "bucketPath": "/a/img/catalog/provider/untitled/1920x1080.jpg"
+          }
+        ],
+        "__noise": "field the parser must ignore"
+      },
+      {
+        "__unreadable": "no id, type, title or slug",
+        "someOtherShape": {
+          "nested": true
+        }
+      },
+      {
+        "id": 2000100003,
+        "type": "game-title",
+        "typeId": 13,
+        "title": "Cinder Vale",
+        "slug": "cinder-vale",
+        "premiereYear": 2019,
+        "releaseDate": "2019-05-03",
+        "rating": "R",
+        "criticScoreSummary": {
+          "score": 88,
+          "max": 100
+        },
+        "description": "No description.",
+        "genres": [
+          {
+            "id": 1,
+            "name": "Drama"
+          }
+        ],
+        "duration": "1 h 40 m",
+        "platforms": [],
+        "images": [
+          {
+            "filename": "untitled-poster-1440x2160.jpg",
+            "height": 2160,
+            "width": 1440,
+            "alt": "untitled poster",
+            "bucketType": "poster",
+            "bucketPath": "/a/img/catalog/provider/untitled/1440x2160.jpg"
+          },
+          {
+            "filename": "untitled-still-1920x1080.jpg",
+            "height": 1080,
+            "width": 1920,
+            "alt": "untitled still",
+            "bucketType": "backdrop",
+            "bucketPath": "/a/img/catalog/provider/untitled/1920x1080.jpg"
+          }
+        ],
+        "__noise": "field the parser must ignore"
+      }
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "data": {
+    "item": {
+      "id": 2000100003,
+      "title": "Cinder Vale",
+      "slug": "cinder-vale",
+      "premiereYear": 2023,
+      "releaseDate": "2023-11-07",
+      "rating": "M",
+      "description": "A survival game about rebuilding a valley after the ash falls.",
+      "tagline": null,
+      "genres": [
+        {
+          "id": 12,
+          "name": "Survival"
+        }
+      ],
+      "duration": null,
+      "imdbId": null,
+      "networks": [],
+      "production": {
+        "companies": [
+          {
+            "id": 777,
+            "name": "Hollow Lamp Studio"
+          }
+        ]
+      },
+      "awards": [],
+      "criticScoreSummary": {
+        "score": 88,
+        "max": 100,
+        "reviewCount": 61
+      },
+      "platforms": [
+        {
+          "id": 3,
+          "name": "PC"
+        }
+      ],
+      "images": [
+        {
+          "filename": "cinder-vale-poster-1440x2160.jpg",
+          "height": 2160,
+          "width": 1440,
+          "alt": "cinder-vale poster",
+          "bucketType": "poster",
+          "bucketPath": "/a/img/catalog/provider/cinder-vale/1440x2160.jpg"
+        },
+        {
+          "filename": "cinder-vale-still-1920x1080.jpg",
+          "height": 1080,
+          "width": 1920,
+          "alt": "cinder-vale still",
+          "bucketType": "backdrop",
+          "bucketPath": "/a/img/catalog/provider/cinder-vale/1920x1080.jpg"
+        }
+      ]
+    }
+  }
+}

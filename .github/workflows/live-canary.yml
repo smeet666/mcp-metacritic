@@ -1,0 +1,103 @@
+# Nightly canary against the real Metacritic.
+#
+# Metacritic publishes no API documentation and makes no compatibility promise,
+# so the response shapes this server reads can change without notice. The unit
+# tests run against generated fixtures, so the day that happens they stay green
+# while the published server is broken for everyone. This job is the only thing
+# that notices, and it opens an issue when it fails.
+#
+# It is deliberately separate from CI: it depends on a third-party site, so a
+# failure here means "the site moved", never "this pull request is bad".
+
+name: Live canary
+
+on:
+  schedule:
+    # 02:37 UTC, a quiet hour for the site and clear of other scheduled jobs.
+    - cron: "37 2 * * *"
+  workflow_dispatch:
+
+# A single run at a time, so a slow night cannot overlap with the next one.
+concurrency:
+  group: live-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Needed to open the issue that reports a broken contract.
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run the live canary
+        env:
+          MC_LIVE: "1"
+          # Slower than the default: a scheduled job has no user waiting, and
+          # shared runners leave from addresses many other projects also use.
+          MC_MIN_INTERVAL_MS: "2500"
+          # Generous: a canary must fail on a changed contract, not on a slow night.
+          MC_TIMEOUT_MS: "60000"
+          MC_LOG_LEVEL: info
+        run: npm run test:live
+
+      - name: Report a broken canary
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = "Live canary failing: Metacritic may have changed its responses";
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              "The nightly live canary failed. Either Metacritic changed the responses this server",
+              "reads, or it was unreachable from the runner.",
+              "",
+              `Run: ${runUrl}`,
+              "",
+              "The assertion messages name the field that moved. Every route template and every field",
+              "name lives in `src/mc/paths.ts`, so a rename is usually a one-file fix, followed by",
+              "regenerating the fixtures so the unit tests cover the new shape, and a patch release.",
+              "",
+              "Three assertions deserve special attention.",
+              "",
+              "If the one checking that a search result stays small is the only failure, the trimming",
+              "this server exists to perform has stopped working, and every search will quietly return",
+              "the full payload instead of rows.",
+              "",
+              "If the one checking that an unknown slug raises an error is the only failure, a missing",
+              "title will be reported to users as though it does not exist.",
+              "",
+              "If the two score scales stop being reported with their own maximum, a model will compare",
+              "a critic score out of 100 against a user score out of 10 and draw the wrong conclusion.",
+            ].join("\n");
+
+            // Reuse the open issue rather than filing one every night.
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "live-canary",
+            });
+
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: `Still failing as of ${new Date().toISOString()}. ${runUrl}`,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ["live-canary"],
+              });
+            }

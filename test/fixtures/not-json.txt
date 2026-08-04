@@ -1,0 +1,4 @@
+<!DOCTYPE html>
+<html><head><title>Just a moment...</title>
+<body>Checking your browser.
+</html>

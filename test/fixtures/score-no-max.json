@@ -1,0 +1,12 @@
+{
+  "data": {
+    "item": {
+      "score": 73,
+      "reviewCount": 36,
+      "positiveCount": 30,
+      "neutralCount": 5,
+      "negativeCount": 1,
+      "sentiment": "Generally favorable"
+    }
+  }
+}

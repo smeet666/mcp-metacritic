@@ -1,0 +1,30 @@
+name: Publish
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Lets the runner mint the OIDC token npm exchanges for publish rights.
+      # This is also what backs the provenance attestation.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm 11.5.1 or later; setup-node still ships 10.x.
+      - run: npm install -g npm@latest
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      # No NODE_AUTH_TOKEN: authentication comes from the OIDC token, so there
+      # is no long-lived npm secret stored on this repository.
+      - run: npm publish --provenance --access public

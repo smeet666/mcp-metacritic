@@ -1,0 +1,50 @@
+{
+  "data": {
+    "totalResults": 36,
+    "item": {
+      "default": [
+        {
+          "quote": "Attributable, and therefore quotable.",
+          "score": 77,
+          "url": "https://example.invalid/harbour/blue-horizon",
+          "author": "Marisol Vane",
+          "authorSlug": "anonymous",
+          "publicationName": "The Harbour Review",
+          "publicationSlug": "the-harbour-review",
+          "date": "2011-10-01",
+          "reviewId": 21,
+          "__noise": {
+            "platform": null,
+            "tags": []
+          }
+        },
+        {
+          "reviewId": 22,
+          "quote": "Nobody will admit to having written this one.",
+          "score": 55,
+          "author": "Unsigned",
+          "date": "2011-10-08",
+          "url": "https://example.invalid/unknown/blue-horizon"
+        },
+        {
+          "quote": "Also attributable.",
+          "score": 62,
+          "url": "https://example.invalid/reel/blue-horizon",
+          "author": "Peter Oduya",
+          "authorSlug": "anonymous",
+          "publicationName": "Reel Quarterly",
+          "publicationSlug": "reel-quarterly",
+          "date": "2011-10-01",
+          "reviewId": 23,
+          "__noise": {
+            "platform": null,
+            "tags": []
+          }
+        }
+      ],
+      "positive": [],
+      "neutral": [],
+      "negative": []
+    }
+  }
+}

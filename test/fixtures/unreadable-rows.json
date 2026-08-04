@@ -1,0 +1,25 @@
+{
+  "data": {
+    "totalResults": 90,
+    "items": [
+      {
+        "__unreadable": "row one",
+        "someOtherShape": {
+          "nested": true
+        }
+      },
+      {
+        "__unreadable": "row two",
+        "someOtherShape": {
+          "nested": true
+        }
+      },
+      {
+        "__unreadable": "row three",
+        "someOtherShape": {
+          "nested": true
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "data": {
+    "item": {
+      "id": 2000100001,
+      "title": "Blue Horizon",
+      "slug": "blue-horizon",
+      "premiereYear": 2011,
+      "releaseDate": "2011-09-30",
+      "rating": "R",
+      "description": "A lighthouse keeper counts the ships that never come back, and starts writing to one of them.\nThe letters are answered.",
+      "tagline": "Some lights are warnings.",
+      "genres": [
+        {
+          "id": 4,
+          "name": "Neo-Noir"
+        },
+        {
+          "id": 7,
+          "name": "Drama"
+        }
+      ],
+      "duration": "1 h 52 m",
+      "imdbId": "tt0910111",
+      "networks": [],
+      "production": {
+        "companies": [
+          {
+            "id": 501,
+            "name": "Nine Fathoms Pictures"
+          },
+          {
+            "id": 502,
+            "name": "Cold Coast Films"
+          }
+        ]
+      },
+      "awards": [
+        {
+          "awardEvent": "Torrance Film Prize",
+          "wins": 4,
+          "nominations": 8
+        },
+        {
+          "awardEvent": "Coastal Critics Circle",
+          "wins": null,
+          "nominations": 3
+        },
+        {
+          "awardEvent": "Harbour Guild Awards",
+          "wins": 9,
+          "nominations": 19
+        },
+        {
+          "wins": 1,
+          "nominations": 2
+        }
+      ],
+      "criticScoreSummary": {
+        "score": 81,
+        "max": 100,
+        "reviewCount": 42
+      },
+      "images": [
+        {
+          "filename": "blue-horizon-poster-1440x2160.jpg",
+          "height": 2160,
+          "width": 1440,
+          "alt": "blue-horizon poster",
+          "bucketType": "poster",
+          "bucketPath": "/a/img/catalog/provider/blue-horizon/1440x2160.jpg"
+        },
+        {
+          "filename": "blue-horizon-still-1920x1080.jpg",
+          "height": 1080,
+          "width": 1920,
+          "alt": "blue-horizon still",
+          "bucketType": "backdrop",
+          "bucketPath": "/a/img/catalog/provider/blue-horizon/1920x1080.jpg"
+        }
+      ],
+      "__noise": {
+        "cast": [
+          {
+            "name": "Ada Fenwick",
+            "role": "Keeper"
+          }
+        ],
+        "trailers": []
+      }
+    }
+  }
+}

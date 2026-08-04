@@ -1,0 +1,149 @@
+{
+  "data": {
+    "totalResults": 320,
+    "itemsPerPage": 24,
+    "items": [
+      {
+        "id": 2000100001,
+        "type": "movie",
+        "typeId": 2,
+        "title": "Blue Horizon",
+        "slug": "blue-horizon",
+        "premiereYear": 2011,
+        "releaseDate": "2011-09-30",
+        "rating": "R",
+        "criticScoreSummary": {
+          "score": 81,
+          "max": 100
+        },
+        "description": "A lighthouse keeper counts the ships that never come back.",
+        "genres": [
+          {
+            "id": 4,
+            "name": "Neo-Noir"
+          }
+        ],
+        "duration": "1 h 40 m",
+        "platforms": [],
+        "images": [
+          {
+            "filename": "blue-horizon-poster-1440x2160.jpg",
+            "height": 2160,
+            "width": 1440,
+            "alt": "blue-horizon poster",
+            "bucketType": "poster",
+            "bucketPath": "/a/img/catalog/provider/blue-horizon/1440x2160.jpg"
+          },
+          {
+            "filename": "blue-horizon-still-1920x1080.jpg",
+            "height": 1080,
+            "width": 1920,
+            "alt": "blue-horizon still",
+            "bucketType": "backdrop",
+            "bucketPath": "/a/img/catalog/provider/blue-horizon/1920x1080.jpg"
+          }
+        ],
+        "__noise": "field the parser must ignore",
+        "userScore": {
+          "score": 8.8,
+          "max": 10,
+          "reviewCount": 1204
+        }
+      },
+      {
+        "id": 2000100005,
+        "type": "movie",
+        "typeId": 2,
+        "title": "Vermilion Hours",
+        "slug": "vermilion-hours",
+        "premiereYear": 2004,
+        "releaseDate": "2004-10-15",
+        "rating": "PG-13",
+        "criticScoreSummary": {
+          "score": 76,
+          "max": 100
+        },
+        "description": "A night nurse and a taxi driver keep meeting at the same red light.",
+        "genres": [
+          {
+            "id": 7,
+            "name": "Drama"
+          }
+        ],
+        "duration": "1 h 40 m",
+        "platforms": [],
+        "images": [
+          {
+            "filename": "vermilion-hours-poster-1440x2160.jpg",
+            "height": 2160,
+            "width": 1440,
+            "alt": "vermilion-hours poster",
+            "bucketType": "poster",
+            "bucketPath": "/a/img/catalog/provider/vermilion-hours/1440x2160.jpg"
+          },
+          {
+            "filename": "vermilion-hours-still-1920x1080.jpg",
+            "height": 1080,
+            "width": 1920,
+            "alt": "vermilion-hours still",
+            "bucketType": "backdrop",
+            "bucketPath": "/a/img/catalog/provider/vermilion-hours/1920x1080.jpg"
+          }
+        ],
+        "__noise": "field the parser must ignore",
+        "userScore": {
+          "score": 6.1,
+          "max": 10,
+          "reviewCount": 88
+        }
+      },
+      {
+        "id": 2000100006,
+        "type": "movie",
+        "typeId": 2,
+        "title": "Gravel Choir",
+        "slug": "gravel-choir",
+        "premiereYear": 2021,
+        "releaseDate": "2021-03-05",
+        "rating": "R",
+        "criticScoreSummary": {
+          "score": 64,
+          "max": 100
+        },
+        "description": "A quarry town choir goes on tour and comes back one voice short.",
+        "genres": [
+          {
+            "id": 8,
+            "name": "Musical"
+          }
+        ],
+        "duration": "1 h 40 m",
+        "platforms": [],
+        "images": [
+          {
+            "filename": "gravel-choir-poster-1440x2160.jpg",
+            "height": 2160,
+            "width": 1440,
+            "alt": "gravel-choir poster",
+            "bucketType": "poster",
+            "bucketPath": "/a/img/catalog/provider/gravel-choir/1440x2160.jpg"
+          },
+          {
+            "filename": "gravel-choir-still-1920x1080.jpg",
+            "height": 1080,
+            "width": 1920,
+            "alt": "gravel-choir still",
+            "bucketType": "backdrop",
+            "bucketPath": "/a/img/catalog/provider/gravel-choir/1920x1080.jpg"
+          }
+        ],
+        "__noise": "field the parser must ignore",
+        "userScore": {
+          "score": null,
+          "max": 10,
+          "reviewCount": 0
+        }
+      }
+    ]
+  }
+}

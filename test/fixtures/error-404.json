@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "code": 404,
+      "reason": "Not Found",
+      "message": "No entry for that slug.",
+      "requestId": "00000000-0000-0000-0000-000000000000"
+    }
+  ]
+}
