@@ -84,7 +84,6 @@ describe("search rows", () => {
     expect(serialised).not.toContain("Neo-Noir");
     expect(serialised).not.toContain("1440x2160");
     expect(serialised).not.toContain(row.images[0].filename);
-    expect(serialised).not.toContain("1 h 52 m");
     expect(serialised).not.toContain("PlayStation 5");
     expect(serialised).not.toContain("__noise");
   });

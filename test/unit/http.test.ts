@@ -118,6 +118,107 @@ describe("failures that are worth retrying", () => {
   });
 });
 
+describe("push-back from the host", () => {
+  it("reads a 403 as push-back rather than as a permanent refusal", async () => {
+    // The site sits behind bot management, which answers a rate-limited client
+    // with 403 as readily as with 429.
+    const fetch = constantFetch({ status: 403, body: "Forbidden" });
+
+    const error = await expectMcError(() => call(fetch.impl, { maxRetries: 0 }), "rate_limited");
+
+    expect(error.details.retryAfterMs).toBeGreaterThan(0);
+    expect(error.message).toContain("does NOT mean the title is missing");
+  });
+
+  it(
+    "honours Retry-After given in seconds",
+    async () => {
+      const fetch = constantFetch({
+        status: 429,
+        body: "slow down",
+        headers: { "retry-after": "2" },
+      });
+
+      const error = await expectMcError(() => call(fetch.impl, { maxRetries: 0 }), "rate_limited");
+
+      expect(error.details.retryAfterMs).toBe(2000);
+    },
+    RETRY_TIMEOUT,
+  );
+
+  it(
+    "honours Retry-After given as an HTTP date",
+    async () => {
+      const fetch = constantFetch({
+        status: 503,
+        body: "come back later",
+        headers: { "retry-after": new Date(Date.now() + 8_000).toUTCString() },
+      });
+
+      const error = await expectMcError(() => call(fetch.impl, { maxRetries: 0 }), "rate_limited");
+
+      const waitSeconds = (error.details.retryAfterMs ?? 0) / 1000;
+      expect(waitSeconds, "a date eight seconds out is an eight second wait").toBeGreaterThan(4);
+      expect(waitSeconds).toBeLessThanOrEqual(9);
+    },
+    RETRY_TIMEOUT,
+  );
+
+  it(
+    "tells the caller how long to wait, in words as well as in the details",
+    async () => {
+      const fetch = constantFetch({
+        status: 429,
+        body: "slow down",
+        headers: { "retry-after": "3" },
+      });
+
+      const error = await expectMcError(() => call(fetch.impl, { maxRetries: 0 }), "rate_limited");
+
+      expect(error.details.hint).toContain("3");
+    },
+    RETRY_TIMEOUT,
+  );
+});
+
+describe("a body that is not JSON", () => {
+  it(
+    "is retried, since an edge challenge page clears on its own",
+    async () => {
+      const body = fixtureText("search.json");
+      const fetch = sequenceFetch([
+        {
+          status: 200,
+          body: fixtureText("not-json.txt"),
+          headers: { "content-type": "text/html" },
+        },
+        { status: 200, body },
+      ]);
+
+      await expect(call(fetch.impl, { maxRetries: 2 })).resolves.toBe(body);
+      expect(fetch.calls, "the challenge page was not the final answer").toHaveLength(2);
+    },
+    RETRY_TIMEOUT,
+  );
+
+  it(
+    "surfaces as parse_failure when every attempt returns one",
+    async () => {
+      const fetch = constantFetch({
+        status: 200,
+        body: fixtureText("not-json.txt"),
+        headers: { "content-type": "text/html" },
+      });
+
+      const error = await expectMcError(() => call(fetch.impl, { maxRetries: 1 }), "parse_failure");
+
+      expect(fetch.calls, "one attempt plus one retry").toHaveLength(2);
+      expect(error.details.hint, "an unreadable shape is worth reporting").toContain("github.com");
+    },
+    RETRY_TIMEOUT,
+  );
+});
+
 describe("failures that are not worth retrying", () => {
   it("does not retry a 404, which is an answer rather than a fault", async () => {
     const fetch = constantFetch({ status: 404, body: fixtureText("error-404.json") });

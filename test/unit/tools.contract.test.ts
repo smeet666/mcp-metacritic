@@ -12,8 +12,10 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createServer } from "../../src/server.js";
 import {
+  fixtureRouter,
   fixtureText,
   happyRouter,
+  ROUTE,
   sequenceFetch,
   silentLogger,
   testConfig,
@@ -258,6 +260,100 @@ describe("get_title", () => {
     expect(offers.map((offer: any) => offer.url)).toContain("https://watch.example.invalid/title");
   });
 
+  it("gates the payload on the sections asked for: scores alone carries no entry text", async () => {
+    const result: any = await client.callTool({
+      name: "get_title",
+      arguments: { slug: "blue-horizon", kind: "movie", sections: ["scores"] },
+    });
+
+    const out = result.structuredContent;
+    expect(out.description, "description belongs to 'basic'").toBeNull();
+    expect(out.genres).toEqual([]);
+    expect(out.duration_minutes).toBeNull();
+    expect(out.imdb_id).toBeNull();
+    expect(out.total_chars).toBe(0);
+    expect(out.critic_score.score, "the section that was asked for is still served").toBe(73);
+  });
+
+  it("returns no score when scores were not asked for, and says the absence means nothing", async () => {
+    const result: any = await client.callTool({
+      name: "get_title",
+      arguments: { slug: "blue-horizon", kind: "movie", sections: ["basic"] },
+    });
+
+    const out = result.structuredContent;
+    expect(out.critic_score).toBeNull();
+    expect(out.user_score).toBeNull();
+    expect(out.description, "'basic' is what carries the entry text").toBeTruthy();
+
+    const notes = out.notes.join(" ");
+    expect(notes, "a null the caller would read as 'Metacritic publishes none'").toContain(
+      "not requested",
+    );
+    expect(notes).toContain("sections");
+  });
+
+  it("keeps networks and production as separate sections", async () => {
+    const production: any = await client.callTool({
+      name: "get_title",
+      arguments: { slug: "blue-horizon", kind: "movie", sections: ["production"] },
+    });
+    const networks: any = await client.callTool({
+      name: "get_title",
+      arguments: { slug: "blue-horizon", kind: "movie", sections: ["networks"] },
+    });
+
+    expect(production.structuredContent.production).toBeDefined();
+    expect(production.structuredContent.networks, "networks was not asked for").toBeUndefined();
+    expect(networks.structuredContent.networks).toBeDefined();
+    expect(networks.structuredContent.production, "production was not asked for").toBeUndefined();
+  });
+
+  it("does not report a failed score request as an absence of scores", async () => {
+    const brokenScores = await connect(
+      fixtureRouter([
+        [ROUTE.criticScore, { status: 500, body: "boom" }],
+        [ROUTE.userScore, { status: 500, body: "boom" }],
+        [ROUTE.detailMovie, fixtureText("detail-movie.json")],
+      ]),
+    );
+
+    const result: any = await brokenScores.callTool({
+      name: "get_title",
+      arguments: { slug: "blue-horizon", kind: "movie", sections: ["basic", "scores"] },
+    });
+
+    expect(result.isError, "the entry itself was read, so this is not a failed call").toBeFalsy();
+    expect(result.structuredContent.critic_score).toBeNull();
+
+    const notes = result.structuredContent.notes.join(" ");
+    expect(notes, "an unread score is not a published absence").not.toMatch(
+      /publishes no (critic|user) score/i,
+    );
+    expect(notes, "the note names the failure").toContain("could not be read");
+    expect(notes).toContain("network_error");
+    expect(notes, "and says what that does not mean").toContain("rather than absent");
+  });
+
+  it("does report a genuinely missing score as an absence", async () => {
+    const noScores = await connect(
+      fixtureRouter([
+        [ROUTE.criticScore, { status: 404, body: fixtureText("error-404.json") }],
+        [ROUTE.userScore, { status: 404, body: fixtureText("error-404.json") }],
+        [ROUTE.detailMovie, fixtureText("detail-movie.json")],
+      ]),
+    );
+
+    const result: any = await noScores.callTool({
+      name: "get_title",
+      arguments: { slug: "blue-horizon", kind: "movie", sections: ["scores"] },
+    });
+
+    const notes = result.structuredContent.notes.join(" ");
+    expect(notes).toMatch(/publishes no critic score/i);
+    expect(notes).not.toContain("could not be read");
+  });
+
   it("paginates a long description instead of cutting it off silently", async () => {
     const result: any = await client.callTool({
       name: "get_title",
@@ -317,11 +413,52 @@ describe("get_reviews", () => {
     expect(textOf(result)).toMatch(/no critic review/i);
   });
 
-  it("says how many exist upstream, so the sample is not read as the whole list", async () => {
+  it("blames the offset, not the filter, when the offset ran off the end", async () => {
+    const beyond: any = await readReviews({ sentiment: "positive", offset: 20 });
+    const fromTheStart: any = await readReviews({ sentiment: "positive", offset: 0 });
+
+    expect(fromTheStart.structuredContent.reviews.length, "the slice is not empty").toBe(4);
+    expect(beyond.structuredContent.reviews).toEqual([]);
+
+    const note = beyond.structuredContent.notes.join(" ");
+    expect(note, "the offset is what ran out").toContain("offset=20");
+    expect(note, "call again from the start").toContain("offset=0");
+    expect(
+      note,
+      "saying no positive review is published would contradict the same call at offset 0",
+    ).not.toMatch(/publishes no positive review/i);
+  });
+
+  it("says how many exist upstream, so what it serves is not read as the whole list", async () => {
     const result: any = await readReviews({});
 
-    expect(result.structuredContent.total_available).toBe(36);
-    expect(result.structuredContent.notes.join(" ")).toContain("sample");
+    const { total_available, reviews, notes, source_url } = result.structuredContent;
+    expect(total_available).toBe(36);
+
+    const note = notes.find((entry: string) => entry.includes(String(total_available)))!;
+    expect(note, "no note reconciles the total with what came back").toBeTruthy();
+    expect(note, "the note states how many were served").toContain(String(reviews.length));
+    expect(note, "and points at where the rest are").toContain(source_url);
+  });
+
+  it("does not describe a sentiment slice as the whole entry's count", async () => {
+    const result: any = await readReviews({ sentiment: "negative" });
+
+    const { total_available, reviews, notes } = result.structuredContent;
+    expect(reviews.length).toBe(1);
+    expect(total_available, "the total counts the entry, not the slice").toBe(36);
+
+    const note = notes.find((entry: string) => entry.includes(String(total_available)))!;
+    expect(note, "a slice must be named as a slice").toContain("negative");
+    expect(note, "serving one of a slice is not serving zero").not.toMatch(/\b0\b/);
+  });
+
+  it("carries the entry page, so a review with no article link can still be cited", async () => {
+    const result: any = await readReviews({});
+
+    expect(result.structuredContent.source_url).toBe(
+      "https://www.metacritic.com/movie/blue-horizon/",
+    );
   });
 
   it("returns a different slice for each sentiment", async () => {
@@ -349,6 +486,108 @@ describe("get_reviews", () => {
     for (const review of result.structuredContent.reviews) {
       expect(review.max).toBe(100);
     }
+  });
+});
+
+describe("the text mirror", () => {
+  /** A server whose critic reviews are long enough to overrun the mirror budget. */
+  const withLongQuotes = () =>
+    connect(
+      fixtureRouter([
+        [ROUTE.criticReviews, fixtureText("reviews-critic-long.json")],
+        [ROUTE.detailMovie, fixtureText("detail-movie.json")],
+      ]),
+    );
+
+  it("keeps its attribution when the body is far too long to fit", async () => {
+    const long = await withLongQuotes();
+
+    const result: any = await long.callTool({
+      name: "get_reviews",
+      arguments: { slug: "blue-horizon", kind: "movie", limit: 50 },
+    });
+
+    const text = textOf(result);
+    expect(
+      text.length,
+      "the whole block, trailer included, stays within budget",
+    ).toBeLessThanOrEqual(2000);
+    expect(text.length, "this test is pointless if the body fitted anyway").toBeGreaterThan(1500);
+    expect(text.endsWith("Source: Metacritic"), "the credit is the line that must survive").toBe(
+      true,
+    );
+  });
+
+  it("says it was shortened, since a text-only client cannot see what is missing", async () => {
+    const long = await withLongQuotes();
+
+    const result: any = await long.callTool({
+      name: "get_reviews",
+      arguments: { slug: "blue-horizon", kind: "movie", limit: 50 },
+    });
+
+    const text = textOf(result);
+    expect(text).toContain("shortened");
+    expect(
+      result.structuredContent.reviews.length,
+      "the structured output keeps every row the text had to drop",
+    ).toBe(5);
+  });
+
+  it("gives get_title's mirror the entry URL alongside the credit", async () => {
+    const result: any = await client.callTool({
+      name: "get_title",
+      arguments: { slug: "blue-horizon", kind: "movie" },
+    });
+
+    const text = textOf(result);
+    expect(text.length).toBeLessThanOrEqual(2000);
+    expect(text.endsWith("https://www.metacritic.com/movie/blue-horizon/")).toBe(true);
+    expect(text).toContain("Source: Metacritic");
+  });
+
+  it("indents third-party quotes so they cannot read as the server's own words", async () => {
+    const long = await withLongQuotes();
+
+    const result: any = await long.callTool({
+      name: "get_reviews",
+      arguments: { slug: "blue-horizon", kind: "movie", limit: 1 },
+    });
+
+    const quote = result.structuredContent.reviews[0].quote as string;
+    const text = textOf(result);
+    expect(quote, "this fixture quote spans blank lines on purpose").toContain("\n");
+    for (const line of quote.split("\n")) {
+      expect(text, `quote line: ${JSON.stringify(line)}`).toContain(`   ${line}`);
+    }
+  });
+
+  it("ends every review line with the article it came from", async () => {
+    const long = await withLongQuotes();
+
+    const result: any = await long.callTool({
+      name: "get_reviews",
+      arguments: { slug: "blue-horizon", kind: "movie", limit: 1 },
+    });
+
+    const review = result.structuredContent.reviews[0];
+    expect(review.url).toBe("https://example.invalid/harbour/blue-horizon");
+    expect(textOf(result)).toContain(`   ${review.url}`);
+  });
+
+  it("falls back to the entry page for a review with no article link", async () => {
+    const long = await withLongQuotes();
+
+    const result: any = await long.callTool({
+      name: "get_reviews",
+      arguments: { slug: "blue-horizon", kind: "movie", offset: 4, limit: 1 },
+    });
+
+    const review = result.structuredContent.reviews[0];
+    expect(review.url, "the fixture entry carries no link").toBeNull();
+    expect(textOf(result), "a quote with nowhere to point still points somewhere").toContain(
+      `   ${result.structuredContent.source_url}`,
+    );
   });
 });
 

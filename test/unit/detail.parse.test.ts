@@ -48,7 +48,7 @@ describe("detail", () => {
     expect(data.description).toContain("A lighthouse keeper counts the ships");
     expect(data.tagline).toBe("Some lights are warnings.");
     expect(data.genres).toEqual(["Neo-Noir", "Drama"]);
-    expect(data.duration).toBe("1 h 52 m");
+    expect(data.duration, "runtime is a count of minutes, not a formatted string").toBe(112);
   });
 
   it("keeps the IMDb id, which is what streaming offers are keyed by", async () => {
@@ -113,7 +113,10 @@ describe("detail", () => {
     const { data } = await client(happyRouter().impl).getDetail("game", "cinder-vale");
 
     expect(data.tagline).toBeNull();
-    expect(data.duration).toBeNull();
+    expect(
+      data.duration,
+      "a game has no runtime, which is an absence rather than a zero",
+    ).toBeNull();
     expect(data.imdbId).toBeNull();
     expect(data.awards).toEqual([]);
     expect(data.networks).toEqual([]);

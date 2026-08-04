@@ -93,6 +93,8 @@ describe.runIf(LIVE)("live: Metacritic", () => {
       expect(data.kind, "detail.kind comes from the caller, not the response").toBe(KIND);
       expect(data.description, "detail.description").toBeTruthy();
       expect(data.genres.length, "detail.genres").toBeGreaterThan(0);
+      expect(typeof data.duration, "detail.duration is a count of minutes").toBe("number");
+      expect(data.duration, "detail.duration").toBeGreaterThan(0);
       expect(data.imdbId, "detail.imdbId, which streaming offers are keyed by").toMatch(/^tt\d+/);
     },
     TIMEOUT,

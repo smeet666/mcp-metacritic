@@ -224,7 +224,7 @@ export function parseDetail(raw: string, url: string, kind: Kind, slug: string):
     description: str(item.description),
     tagline: str(item.tagline),
     genres: toStringList(item.genres),
-    duration: str(item.duration),
+    duration: intOf(item.duration),
     imdbId: str(item.imdbId),
     networks: toStringList(item.networks),
     production: toCompanies(item.production),

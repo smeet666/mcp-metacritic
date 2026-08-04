@@ -198,6 +198,54 @@ describe("what the client caches", () => {
     ).toBeGreaterThanOrEqual(1);
   });
 
+  it("pages a sample it already holds without going back to the site", async () => {
+    const fetch = happyRouter();
+    const client = new McClient({
+      config: cachingConfig(),
+      logger: silentLogger,
+      fetchImpl: fetch.impl,
+    });
+    const page = (offset: number) =>
+      client.getCriticReviews({
+        kind: "movie",
+        slug: "blue-horizon",
+        sentiment: "all",
+        limit: 2,
+        offset,
+      });
+
+    const first = await page(0);
+    const second = await page(2);
+
+    expect(first.cached).toBe(false);
+    expect(second.cached, "the second page is a slice of what is already in memory").toBe(true);
+    expect(
+      fetch.calls.filter((call) => call.url.includes(ROUTE.criticReviews)),
+      "the route ignores limit and offset, so asking again would spend a request for nothing",
+    ).toHaveLength(1);
+  });
+
+  it("asks the reviews route for no limit or offset, since it honours neither", async () => {
+    const fetch = happyRouter();
+    const client = new McClient({
+      config: cachingConfig(),
+      logger: silentLogger,
+      fetchImpl: fetch.impl,
+    });
+
+    await client.getCriticReviews({
+      kind: "movie",
+      slug: "blue-horizon",
+      sentiment: "all",
+      limit: 7,
+      offset: 3,
+    });
+
+    const url = fetch.calls[0]!.url;
+    expect(url).not.toContain("limit=");
+    expect(url).not.toContain("offset=");
+  });
+
   it("keeps critic and user scores of one title apart", async () => {
     const client = new McClient({
       config: cachingConfig(),

@@ -1,0 +1,87 @@
+{
+  "data": {
+    "totalResults": 36,
+    "item": {
+      "default": [
+        {
+          "quote": "A film that trusts its silences, and is right to.\nThe camera stays put while the weather does the acting, and for a while that is enough to carry a scene that has nowhere in particular to go.\n\nBy the second hour the trick has been shown twice too often, though the closing minutes recover more ground than seems possible from where they start.",
+          "score": 91,
+          "url": "https://example.invalid/harbour/blue-horizon",
+          "author": "Marisol Vane",
+          "authorSlug": "anonymous",
+          "publicationName": "The Harbour Review",
+          "publicationSlug": "the-harbour-review",
+          "date": "2011-10-01",
+          "reviewId": 41,
+          "__noise": {
+            "platform": null,
+            "tags": []
+          }
+        },
+        {
+          "quote": "Two hours of weather and grief, beautifully shot.\nThe camera stays put while the weather does the acting, and for a while that is enough to carry a scene that has nowhere in particular to go.\n\nBy the second hour the trick has been shown twice too often, though the closing minutes recover more ground than seems possible from where they start.",
+          "score": 84,
+          "url": "https://example.invalid/northern/blue-horizon",
+          "author": "Ines Kavanagh",
+          "authorSlug": "anonymous",
+          "publicationName": "Northern Screen",
+          "publicationSlug": "northern-screen",
+          "date": "2011-10-01",
+          "reviewId": 42,
+          "__noise": {
+            "platform": null,
+            "tags": []
+          }
+        },
+        {
+          "quote": "The letters device strains, but the lead does not.\nThe camera stays put while the weather does the acting, and for a while that is enough to carry a scene that has nowhere in particular to go.\n\nBy the second hour the trick has been shown twice too often, though the closing minutes recover more ground than seems possible from where they start.",
+          "score": 70,
+          "url": "https://example.invalid/reel/blue-horizon",
+          "author": "Peter Oduya",
+          "authorSlug": "anonymous",
+          "publicationName": "Reel Quarterly",
+          "publicationSlug": "reel-quarterly",
+          "date": "2011-10-01",
+          "reviewId": 43,
+          "__noise": {
+            "platform": null,
+            "tags": []
+          }
+        },
+        {
+          "quote": "Handsome and inert in roughly equal measure.\nThe camera stays put while the weather does the acting, and for a while that is enough to carry a scene that has nowhere in particular to go.\n\nBy the second hour the trick has been shown twice too often, though the closing minutes recover more ground than seems possible from where they start.",
+          "score": 58,
+          "url": "https://example.invalid/ledger/blue-horizon",
+          "author": "Dana Whitlock",
+          "authorSlug": "anonymous",
+          "publicationName": "The Evening Ledger",
+          "publicationSlug": "the-evening-ledger",
+          "date": "2011-10-01",
+          "reviewId": 44,
+          "__noise": {
+            "platform": null,
+            "tags": []
+          }
+        },
+        {
+          "quote": "A postcard mistaken for a novel.\nThe camera stays put while the weather does the acting, and for a while that is enough to carry a scene that has nowhere in particular to go.\n\nBy the second hour the trick has been shown twice too often, though the closing minutes recover more ground than seems possible from where they start.",
+          "score": 40,
+          "url": null,
+          "author": "Bram Selig",
+          "authorSlug": "anonymous",
+          "publicationName": "Cut & Print",
+          "publicationSlug": "cut-and-print",
+          "date": "2011-10-01",
+          "reviewId": 45,
+          "__noise": {
+            "platform": null,
+            "tags": []
+          }
+        }
+      ],
+      "positive": [],
+      "neutral": [],
+      "negative": []
+    }
+  }
+}

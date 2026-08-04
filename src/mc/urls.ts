@@ -83,17 +83,23 @@ export function scoreUrl(kind: Kind, slug: string, source: "critic" | "user"): s
   );
 }
 
+/**
+ * Reviews for one entry.
+ *
+ * No limit or offset is sent. The route ignores both and always answers with
+ * the same sample, so including them would only vary the URL, and with it the
+ * cache key, making every page of a sample already held in memory cost a fresh
+ * request. Paging happens over the sample the caller already has.
+ */
 export function reviewsUrl(options: {
   kind: Kind;
   slug: string;
   source: "critic" | "user";
-  limit: number;
-  offset: number;
 }): string {
   const component = options.source === "critic" ? COMPONENT.criticReviews : COMPONENT.userReviews;
   return build(
     `/reviews/metacritic/${options.source}/${API_SEGMENT[options.kind]}/${checkSlug(options.slug)}/summary/web`,
-    { ...component, limit: options.limit, offset: options.offset },
+    component,
   );
 }
 

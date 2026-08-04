@@ -10,7 +10,6 @@ import { z } from "zod";
 import type { McClient } from "../mc/client.js";
 import type { Kind } from "../types.js";
 import {
-  ATTRIBUTION,
   ok,
   renderTitleList,
   titleSummarySchema,
@@ -24,6 +23,7 @@ export const searchTitlesDescription = [
   "Returns one compact row per match, carrying the critic Metascore, so a question about the critical verdict needs no second call.",
   "Search rows carry no audience score: use get_title for that, or browse_titles, which does return it.",
   "Use the slug and kind with get_title for the full entry, or with get_reviews for what critics wrote.",
+  "There is no paging: 'limit' is the only lever, and results always start from the most relevant match.",
   "This searches titles only. It cannot find an entry from a plot detail, a person or a studio.",
 ].join(" ");
 
@@ -71,6 +71,10 @@ export async function runSearchTitles(
       args.kind === "any" ? data.titles : data.titles.filter((title) => title.kind === args.kind);
     const results = matching.slice(0, args.limit).map(toTitleSummaryOut);
 
+    // Filtering by kind happens here, over a fixed upstream window, so the
+    // ceiling is what that window held rather than what the catalogue holds.
+    const windowExhausted = args.kind !== "any" && matching.length === results.length;
+
     const notes: string[] = [];
     if (cached) notes.push("Served from this server's short-lived in-memory cache.");
 
@@ -85,7 +89,7 @@ export async function runSearchTitles(
       );
     } else if (data.totalResults > results.length) {
       notes.push(
-        `${data.totalResults} entries matched and ${results.length} are shown. Narrow the query for a more useful set.`,
+        `${data.totalResults} entries matched and ${results.length} are shown. Raise 'limit' for more, or narrow the query: this tool cannot page.`,
       );
     }
     if (results.length === 0) {
@@ -94,12 +98,16 @@ export async function runSearchTitles(
           ? "No entry matched. Metacritic matches on the title alone, so try a shorter fragment of it."
           : `No ${args.kind} matched. Other kinds may still match: call again with kind="any".`,
       );
+    } else if (windowExhausted && results.length < args.limit) {
+      notes.push(
+        `Every ${args.kind} in the window Metacritic returned is shown. There may be more further down its ranking, which this tool cannot reach.`,
+      );
     }
 
     const summary =
       results.length === 0
         ? `No Metacritic entry matched "${args.query}".`
-        : `${results.length} entr${results.length === 1 ? "y" : "ies"} for "${args.query}":\n${renderTitleList(results)}\n\n${ATTRIBUTION}`;
+        : `${results.length} entr${results.length === 1 ? "y" : "ies"} for "${args.query}":\n${renderTitleList(results)}`;
 
     return ok({ query: args.query, results, total_available: data.totalResults, notes }, summary);
   } catch (error) {

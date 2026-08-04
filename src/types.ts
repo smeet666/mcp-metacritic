@@ -67,7 +67,8 @@ export interface TitleDetail extends TitleSummary {
   description: string | null;
   tagline: string | null;
   genres: string[];
-  duration: string | null;
+  /** Minutes: a film's runtime, or a show's typical episode length. */
+  duration: number | null;
   /** IMDb identifier, which lets a caller cross-reference other sources. */
   imdbId: string | null;
   networks: string[];

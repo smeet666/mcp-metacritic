@@ -9,7 +9,8 @@
 import { z } from "zod";
 import type { McClient } from "../mc/client.js";
 import type { Kind, Sentiment } from "../types.js";
-import { ATTRIBUTION, kindSchema, ok, toToolError, truncate, type ToolResult } from "./shared.js";
+import { titlePageUrl } from "../mc/urls.js";
+import { kindSchema, ok, toToolError, truncate, type ToolResult } from "./shared.js";
 
 /** Quotes are third-party writing, so they are excerpts rather than reproductions. */
 const MAX_QUOTE_CHARS = 600;
@@ -62,6 +63,9 @@ const reviewSchema = z.object({
 export const getReviewsOutputShape = {
   slug: z.string(),
   kind: z.string(),
+  source_url: z
+    .string()
+    .describe("Metacritic page these reviews belong to. Cite it when an article link is missing."),
   source: z.string(),
   sentiment: z.string(),
   reviews: z.array(reviewSchema),
@@ -85,6 +89,7 @@ export interface GetReviewsArgs {
 
 export async function runGetReviews(client: McClient, args: GetReviewsArgs): Promise<ToolResult> {
   try {
+    const sourceUrl = titlePageUrl(args.kind, args.slug.trim());
     const request = {
       kind: args.kind,
       slug: args.slug,
@@ -119,11 +124,17 @@ export async function runGetReviews(client: McClient, args: GetReviewsArgs): Pro
     const notes: string[] = [];
     if (cached) notes.push("Served from this server's short-lived in-memory cache.");
     if (reviews.length === 0) {
-      notes.push(
-        args.sentiment === "all"
-          ? "No review is published in this slice."
-          : `No ${args.sentiment} review is published. Call again with sentiment="all" to see the rest.`,
-      );
+      if (args.offset > 0 && args.offset >= data.reviews.length) {
+        notes.push(
+          `offset=${args.offset} is past the end of a sample of ${data.reviews.length} ${args.source} reviews. Call again with offset=0.`,
+        );
+      } else if (args.sentiment === "all") {
+        notes.push("Metacritic publishes no review in this slice.");
+      } else {
+        notes.push(
+          `Metacritic publishes no ${args.sentiment} review here. Call again with sentiment="all" to see the rest.`,
+        );
+      }
     }
     if (data.itemCount > data.reviews.length) {
       notes.push(
@@ -131,8 +142,9 @@ export async function runGetReviews(client: McClient, args: GetReviewsArgs): Pro
       );
     }
     if (data.totalResults > data.reviews.length) {
+      const slice = args.sentiment === "all" ? "" : ` in the ${args.sentiment} slice`;
       notes.push(
-        `Metacritic counts ${data.totalResults} ${args.source} reviews in total but publishes a sample of ${data.reviews.length} through this route. The rest are only on the website.`,
+        `Metacritic counts ${data.totalResults} ${args.source} reviews for this entry and serves ${data.reviews.length}${slice} here. The rest are only on the website: ${sourceUrl}`,
       );
     }
 
@@ -144,19 +156,28 @@ export async function runGetReviews(client: McClient, args: GetReviewsArgs): Pro
       .map((review, index) => {
         const who = [review.publication, review.author].filter(Boolean).join(", ");
         const head = `${index + 1}. ${review.score === null ? "" : `${review.score}/${max} `}${who || "anonymous"}`;
-        return `${head}\n   ${review.quote ?? ""}`;
+        // Quotes are third-party writing and can contain blank lines, which
+        // would otherwise sit flush against the server's own trailing lines and
+        // read as if this server had written them. Indenting every line keeps
+        // the boundary visible.
+        const quoted = (review.quote ?? "")
+          .split("\n")
+          .map((line) => `   ${line}`)
+          .join("\n");
+        return `${head}\n${quoted}\n   ${review.url ?? sourceUrl}`;
       })
       .join("\n");
 
     const summary =
       reviews.length === 0
         ? `No ${args.source} review to show for "${args.slug}".`
-        : `${reviews.length} ${args.source} review${reviews.length === 1 ? "" : "s"} of "${args.slug}":\n${listing}\n\n${ATTRIBUTION}`;
+        : `${reviews.length} ${args.source} review${reviews.length === 1 ? "" : "s"} of "${args.slug}":\n${listing}`;
 
     return ok(
       {
         slug: args.slug,
         kind: args.kind,
+        source_url: sourceUrl,
         source: args.source,
         sentiment: args.sentiment,
         reviews,

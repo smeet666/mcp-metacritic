@@ -55,7 +55,7 @@ const searchRow = (over) => ({
   criticScoreSummary: { score: 50, url: "/movie/untitled/critic-reviews/", max: 100 },
   description: "No description.",
   genres: [{ id: 1, name: "Drama" }],
-  duration: "1 h 40 m",
+  duration: 100,
   platforms: [],
   images: images("untitled"),
   __noise: "field the parser must ignore",
@@ -89,7 +89,7 @@ const SEARCH = {
           { id: 4, name: "Neo-Noir" },
           { id: 7, name: "Drama" },
         ],
-        duration: "1 h 52 m",
+        duration: 112,
         images: images("blue-horizon"),
       }),
       searchRow({
@@ -104,7 +104,7 @@ const SEARCH = {
         criticScoreSummary: { score: 67, url: "/tv/paper-lanterns/critic-reviews/", max: 100 },
         description: "Three sisters run a failing print shop in a town that floods every spring.",
         genres: [{ id: 7, name: "Drama" }],
-        duration: "45 m",
+        duration: 45,
         images: images("paper-lanterns"),
       }),
       searchRow({
@@ -138,7 +138,7 @@ const SEARCH = {
         criticScoreSummary: {},
         description: "A caravan crosses a desert that is no longer on any map.",
         genres: [{ id: 2, name: "Adventure" }],
-        duration: "2 h 06 m",
+        duration: 126,
         images: images("the-salt-road"),
       }),
     ],
@@ -224,7 +224,8 @@ const DETAIL_MOVIE = {
         { id: 4, name: "Neo-Noir" },
         { id: 7, name: "Drama" },
       ],
-      duration: "1 h 52 m",
+      // Minutes as an integer, which is how the site reports a runtime.
+      duration: 112,
       imdbId: "tt0910111",
       networks: [],
       production: {
@@ -508,6 +509,81 @@ const REVIEWS_CRITIC = {
 };
 
 /**
+ * A sample whose quotes are long enough that the rendered listing runs well past
+ * the text mirror's budget. This is what a mirror that appends its attribution
+ * and truncates afterwards loses first: the credit on someone else's writing.
+ *
+ * One quote carries blank lines, since third-party prose that sits flush against
+ * the server's own lines reads as if the server had written it.
+ */
+const longQuote = (opening) =>
+  [
+    opening,
+    "The camera stays put while the weather does the acting, and for a while that is enough to carry a scene that has nowhere in particular to go.",
+    "",
+    "By the second hour the trick has been shown twice too often, though the closing minutes recover more ground than seems possible from where they start.",
+  ].join("\n");
+
+const REVIEWS_CRITIC_LONG = {
+  data: {
+    totalResults: 36,
+    item: {
+      default: [
+        criticReview({
+          reviewId: 41,
+          quote: longQuote("A film that trusts its silences, and is right to."),
+          score: 91,
+          author: "Marisol Vane",
+          publicationName: "The Harbour Review",
+          publicationSlug: "the-harbour-review",
+          url: "https://example.invalid/harbour/blue-horizon",
+        }),
+        criticReview({
+          reviewId: 42,
+          quote: longQuote("Two hours of weather and grief, beautifully shot."),
+          score: 84,
+          author: "Ines Kavanagh",
+          publicationName: "Northern Screen",
+          publicationSlug: "northern-screen",
+          url: "https://example.invalid/northern/blue-horizon",
+        }),
+        criticReview({
+          reviewId: 43,
+          quote: longQuote("The letters device strains, but the lead does not."),
+          score: 70,
+          author: "Peter Oduya",
+          publicationName: "Reel Quarterly",
+          publicationSlug: "reel-quarterly",
+          url: "https://example.invalid/reel/blue-horizon",
+        }),
+        criticReview({
+          reviewId: 44,
+          quote: longQuote("Handsome and inert in roughly equal measure."),
+          score: 58,
+          author: "Dana Whitlock",
+          publicationName: "The Evening Ledger",
+          publicationSlug: "the-evening-ledger",
+          url: "https://example.invalid/ledger/blue-horizon",
+        }),
+        criticReview({
+          reviewId: 45,
+          quote: longQuote("A postcard mistaken for a novel."),
+          score: 40,
+          author: "Bram Selig",
+          publicationName: "Cut & Print",
+          publicationSlug: "cut-and-print",
+          // No article link: the entry page has to stand in for it.
+          url: null,
+        }),
+      ],
+      positive: [],
+      neutral: [],
+      negative: [],
+    },
+  },
+};
+
+/**
  * A sample where one entry names no publication. An unattributable quote cannot
  * be handed to a model, so it is dropped rather than shown as anonymous, and
  * the count of what arrived stays what the site sent.
@@ -766,6 +842,7 @@ const FIXTURES = {
   "score-no-max.json": SCORE_NO_MAX,
   "reviews-critic.json": REVIEWS_CRITIC,
   "reviews-critic-no-publication.json": REVIEWS_CRITIC_NO_PUBLICATION,
+  "reviews-critic-long.json": REVIEWS_CRITIC_LONG,
   "reviews-user.json": REVIEWS_USER,
   "offers.json": OFFERS,
   "error-404.json": ERROR_404,

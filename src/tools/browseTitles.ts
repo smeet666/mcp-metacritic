@@ -9,7 +9,6 @@ import { z } from "zod";
 import type { McClient, Sort } from "../mc/client.js";
 import type { Kind } from "../types.js";
 import {
-  ATTRIBUTION,
   ok,
   renderTitleList,
   titleSummarySchema,
@@ -24,6 +23,7 @@ export const browseTitlesDescription = [
   "Filter by genre with a single name such as Horror, Comedy or Action.",
   "Sorting by score returns the all-time ranking, which is dominated by older titles: combine with a genre to narrow it.",
   "Scores come back on their own scales, 100 for critics and 10 for users.",
+  "Paging is approximate: Metacritic does not order tied entries stably, so an entry can appear on two consecutive pages. Deduplicate by slug rather than counting rows.",
 ].join(" ");
 
 export const browseTitlesInputShape = {
@@ -49,7 +49,14 @@ export const browseTitlesOutputShape = {
     .int()
     .describe("How many entries match upstream, which is the size of what this samples."),
   offset: z.number().int(),
-  next_offset: z.number().int().nullable().describe("Pass as 'offset' for the next page."),
+  next_offset: z
+    .number()
+    .int()
+    .nullable()
+    .describe(
+      "Pass as 'offset' for the next page. Tied entries are not ordered stably upstream, so " +
+        "deduplicate by slug across pages.",
+    ),
   notes: z.array(z.string()),
 };
 
@@ -107,7 +114,7 @@ export async function runBrowseTitles(
     const summary =
       results.length === 0
         ? `No rows for ${heading}.`
-        : `${results.length} of ${data.totalResults} ${heading}:\n${renderTitleList(results)}\n\n${ATTRIBUTION}`;
+        : `${results.length} of ${data.totalResults} ${heading}:\n${renderTitleList(results)}`;
 
     return ok(
       {

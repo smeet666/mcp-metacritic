@@ -8,6 +8,7 @@
 
 import { z } from "zod";
 import type { McClient } from "../mc/client.js";
+import { McError } from "../errors.js";
 import type { Kind, ScoreSummary, TitleDetail } from "../types.js";
 import {
   ATTRIBUTION,
@@ -22,14 +23,15 @@ import {
   type ToolResult,
 } from "./shared.js";
 
-const SECTIONS = ["basic", "scores", "awards", "production", "where_to_watch"] as const;
+const SECTIONS = ["basic", "scores", "awards", "production", "networks", "where_to_watch"] as const;
 type Section = (typeof SECTIONS)[number];
 
 export const getTitleDescription = [
   "Read one Metacritic entry by slug and kind, both from search_titles.",
   "Sections are opt-in because a full entry is large: 'basic' and 'scores' are the default and cover most questions.",
   "'scores' fetches the critic and audience breakdowns, each with its own scale, so never compare the two numbers directly.",
-  "'where_to_watch' costs an extra request and only works for films and shows.",
+  "Sections gate the payload: asking for 'scores' alone returns no description, and 'basic' alone returns no scores.",
+  "'networks' lists the broadcasters of a show; 'where_to_watch' costs an extra request and covers films and shows only.",
   "A long description paginates: when 'truncated' is true, call again with 'offset' set to 'next_offset'.",
 ].join(" ");
 
@@ -55,7 +57,11 @@ export const getTitleOutputShape = {
   description: z.string().nullable(),
   tagline: z.string().nullable(),
   genres: z.array(z.string()),
-  duration: z.string().nullable(),
+  duration_minutes: z
+    .number()
+    .int()
+    .nullable()
+    .describe("Runtime in minutes for a film, or the length of a typical episode for a show."),
   imdb_id: z
     .string()
     .nullable()
@@ -77,7 +83,7 @@ export const getTitleOutputShape = {
     )
     .optional()
     .describe("One tally per ceremony. Metacritic publishes no per-category detail."),
-  networks: z.array(z.string()).optional(),
+  networks: z.array(z.string()).optional().describe("Broadcasters, for shows."),
   production: z.array(z.object({ name: z.string(), id: z.number().int().nullable() })).optional(),
   where_to_watch: z
     .array(z.object({ provider: z.string(), kind: z.string(), url: z.string().nullable() }))
@@ -105,24 +111,32 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
     let criticScore: ScoreSummary | null = null;
     let userScore: ScoreSummary | null = null;
     if (wanted.has("scores")) {
-      // A title with no reviews yet has no score document, which is an absence
-      // rather than a failure: the entry itself is perfectly valid.
       [criticScore, userScore] = await Promise.all([
         optionalScore(client, args.kind, args.slug, "critic", notes),
         optionalScore(client, args.kind, args.slug, "user", notes),
       ]);
     }
 
-    const full = item.description ?? "";
+    const basic = wanted.has("basic");
+    const full = basic ? (item.description ?? "") : "";
     const { slice, nextOffset } = sliceAtLineBoundary(full, args.offset, args.max_chars);
-    if (nextOffset !== null) {
+    if (basic && nextOffset !== null) {
       notes.push(
         `The description is longer than ${args.max_chars} characters. Call again with offset=${nextOffset} for the rest.`,
       );
     }
-    if (slice === "" && args.offset > 0 && full.length > 0) {
+    if (basic && slice === "" && args.offset > 0 && full.length > 0) {
       notes.push(
         `offset=${args.offset} is past the end of a description of ${full.length} characters. Call again with offset=0 to read it from the start.`,
+      );
+    }
+
+    // The audience score only exists on the scores route, so without that
+    // section its absence here says nothing about the title. Saying so beats a
+    // bare null the caller would read as "Metacritic publishes none".
+    if (!wanted.has("scores")) {
+      notes.push(
+        "Scores were not requested, so critic_score and user_score are null here regardless of what Metacritic publishes. Add 'scores' to sections to read them.",
       );
     }
 
@@ -132,36 +146,46 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
         metascore: criticScore?.score ?? item.metascore,
         user_score: userScore?.score ?? null,
       },
-      description: slice === "" ? null : slice,
-      tagline: item.tagline,
-      genres: item.genres,
-      duration: item.duration,
-      imdb_id: item.imdbId,
-      total_chars: full.length,
-      returned_chars: slice.length,
+      description: basic && slice !== "" ? slice : null,
+      tagline: basic ? item.tagline : null,
+      genres: basic ? item.genres : [],
+      duration_minutes: basic ? item.duration : null,
+      imdb_id: basic ? item.imdbId : null,
+      total_chars: basic ? full.length : 0,
+      returned_chars: basic ? slice.length : 0,
       offset: args.offset,
-      next_offset: nextOffset,
-      truncated: nextOffset !== null,
+      next_offset: basic ? nextOffset : null,
+      truncated: basic && nextOffset !== null,
       critic_score: criticScore ? toScoreOut(criticScore) : null,
       user_score: userScore ? toScoreOut(userScore) : null,
       notes,
     };
 
     if (wanted.has("awards")) structured.awards = item.awards;
-    if (wanted.has("production")) {
-      structured.production = item.production;
-      structured.networks = item.networks;
-    }
+    if (wanted.has("production")) structured.production = item.production;
+    if (wanted.has("networks")) structured.networks = item.networks;
     if (wanted.has("where_to_watch")) {
       structured.where_to_watch = await watchOffers(client, item, args.kind, notes);
     }
 
-    return ok(structured, render(item, slice, criticScore, userScore));
+    return ok(
+      structured,
+      render(item, slice, criticScore, userScore),
+      `${ATTRIBUTION} — ${item.sourceUrl}`,
+    );
   } catch (error) {
     return toToolError(error);
   }
 }
 
+/**
+ * Read a score, distinguishing an absence from a failure.
+ *
+ * Only `not_found` means the site publishes no score for this entry. Every
+ * other error is a failure to ask, and saying "no score is published" on the
+ * back of a timeout states something false about the data. That distinction is
+ * the whole rule this server is built on, and it has to hold here too.
+ */
 async function optionalScore(
   client: McClient,
   kind: Kind,
@@ -172,8 +196,15 @@ async function optionalScore(
   try {
     const { data } = await client.getScore(kind, slug, source);
     return data;
-  } catch {
-    notes.push(`No ${source} score is published for this entry yet.`);
+  } catch (error) {
+    if (error instanceof McError && error.code === "not_found") {
+      notes.push(`Metacritic publishes no ${source} score for this entry.`);
+    } else {
+      const reason = error instanceof McError ? error.code : "an unexpected error";
+      notes.push(
+        `The ${source} score could not be read (${reason}), so it is missing here rather than absent from Metacritic. Call again to retry.`,
+      );
+    }
     return null;
   }
 }
@@ -226,6 +257,5 @@ function render(
     );
   }
   if (description) lines.push("", description);
-  lines.push("", `${ATTRIBUTION} — ${item.sourceUrl}`);
   return lines.join("\n");
 }

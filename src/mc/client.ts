@@ -6,7 +6,12 @@
  */
 
 import type { Config, Logger } from "../config.js";
-import { createLogger, loadConfig } from "../config.js";
+import {
+  DEFAULT_USER_AGENT,
+  MIN_ALLOWED_INTERVAL_MS,
+  createLogger,
+  loadConfig,
+} from "../config.js";
 import type {
   CriticReview,
   Kind,
@@ -46,6 +51,30 @@ export interface Outcome<T> {
 
 export type Sort = keyof typeof SORT_BY;
 
+/**
+ * Apply the guarantees this project makes about its own traffic.
+ *
+ * The environment parser already enforces both, but `McClient` is published as
+ * a library through the `./client` export and takes a caller-built config, so
+ * without this the pacing floor and the honest identity are optional for anyone
+ * importing it. They are the two things this server offers in exchange for
+ * reading a source that publishes no terms, so they hold on every path.
+ *
+ * A caller may still name their own application in the User-Agent, and there
+ * are good reasons to. Passing the traffic off as a browser is a different
+ * thing, and gets the project's own identity appended so it stays attributable.
+ */
+function withGuarantees(config: Config): Config {
+  const userAgent = /mozilla\/|applewebkit|chrome\/|safari\/|gecko/i.test(config.userAgent)
+    ? `${config.userAgent} ${DEFAULT_USER_AGENT}`
+    : config.userAgent;
+  return {
+    ...config,
+    userAgent,
+    minIntervalMs: Math.max(MIN_ALLOWED_INTERVAL_MS, config.minIntervalMs),
+  };
+}
+
 export class McClient {
   private readonly config: Config;
   private readonly logger: Logger;
@@ -60,7 +89,7 @@ export class McClient {
   private readonly fetchImpl: typeof fetch | undefined;
 
   constructor(options: McClientOptions = {}) {
-    this.config = options.config ?? loadConfig();
+    this.config = withGuarantees(options.config ?? loadConfig());
     this.logger = options.logger ?? createLogger(this.config.logLevel);
     this.limiter = new RateLimiter({ minIntervalMs: this.config.minIntervalMs });
     this.catalogueCache = new TtlLruCache<unknown>(
@@ -103,7 +132,12 @@ export class McClient {
 
   async getDetail(kind: Kind, slug: string): Promise<Outcome<TitleDetail>> {
     const url = detailUrl(kind, slug);
-    return this.fetchParsed(url, this.catalogueCache, (body) => parseDetail(body, url, kind, slug));
+    // The trimmed form is what reached the network, so it is also what the
+    // public link and the echoed slug must be built from.
+    const clean = slug.trim();
+    return this.fetchParsed(url, this.catalogueCache, (body) =>
+      parseDetail(body, url, kind, clean),
+    );
   }
 
   async getScore(

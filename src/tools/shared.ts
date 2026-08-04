@@ -86,11 +86,35 @@ export interface ToolResult {
   isError?: boolean;
 }
 
-export function ok(structured: Record<string, unknown>, text: string): ToolResult {
-  return {
-    content: [{ type: "text", text: truncate(text, MAX_TEXT_MIRROR_CHARS) }],
-    structuredContent: structured,
-  };
+/**
+ * Build a result whose text block always ends with its attribution.
+ *
+ * The body is truncated to fit around the trailer rather than the whole block
+ * being cut afterwards. Appending the credit and then truncating loses exactly
+ * the credit, which is the one line that must survive: a client rendering only
+ * the text would otherwise show third-party review quotes with no source.
+ *
+ * The trailer also states that the text was shortened, since a client that
+ * cannot read `structuredContent` has no other way to know rows are missing.
+ */
+export function ok(
+  structured: Record<string, unknown>,
+  body: string,
+  trailer = ATTRIBUTION,
+): ToolResult {
+  const cutMarker = "\n\n[shortened; the full result is in the structured output]";
+  const reserved = `\n\n${trailer}`.length;
+  const budget = MAX_TEXT_MIRROR_CHARS - reserved;
+
+  let text: string;
+  if (body.length <= budget) {
+    text = `${body}\n\n${trailer}`;
+  } else {
+    const kept = truncate(body, Math.max(0, budget - cutMarker.length));
+    text = `${kept}${cutMarker}\n\n${trailer}`;
+  }
+
+  return { content: [{ type: "text", text }], structuredContent: structured };
 }
 
 /**
