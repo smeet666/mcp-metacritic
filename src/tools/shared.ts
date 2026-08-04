@@ -87,6 +87,19 @@ export interface ToolResult {
 }
 
 /**
+ * Keep text from the site out of the shape this server's own lines take.
+ *
+ * The block ends with lines opening "Note:" and "Source:", and a caller has no
+ * way to tell one of those from the same words inside a title, a quote or a
+ * description written by whoever published it. Indenting a body line that
+ * opens with one of those words keeps the two apart, and costs nothing: the
+ * structured output still carries the text exactly as it was published.
+ */
+function indentMarkerLines(body: string): string {
+  return body.replace(/^(Note:|Source:)/gm, " $1");
+}
+
+/**
  * Build a result whose text block always ends with its notes and attribution.
  *
  * The body is truncated to fit around the trailer rather than the whole block
@@ -121,11 +134,12 @@ export function ok(
   const reserved = `\n\n${trailer}`.length;
   const budget = MAX_TEXT_MIRROR_CHARS - reserved;
 
+  const safe = indentMarkerLines(body);
   let text: string;
-  if (body.length <= budget) {
-    text = `${body}\n\n${trailer}`;
+  if (safe.length <= budget) {
+    text = `${safe}\n\n${trailer}`;
   } else {
-    const kept = truncate(body, Math.max(0, budget - cutMarker.length));
+    const kept = truncate(safe, Math.max(0, budget - cutMarker.length));
     text = `${kept}${cutMarker}\n\n${trailer}`;
   }
 

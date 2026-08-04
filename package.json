@@ -1,6 +1,6 @@
 {
   "name": "mcp-metacritic",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "MCP server for Metacritic. Search films, shows and games, read Metascores and critic reviews with attribution. No API key required.",
   "type": "module",
   "license": "MIT",

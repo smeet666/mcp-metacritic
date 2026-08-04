@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.1
+
+- Stop published text from producing a line shaped like one this server writes.
+  The text block ends with lines opening "Note:" and "Source:", and anyone who
+  publishes on the site can put those same words at the start of a line in a
+  title or a description, where a reader has no way to tell the two apart. Such
+  a line is indented in the text block. The structured output carries the text
+  exactly as published, as it did.
+
 ## 1.1.0
 
 - Ship a `.mcpb` bundle on every release, so the server can be installed by

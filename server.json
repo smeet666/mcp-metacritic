@@ -19,12 +19,12 @@
     "url": "https://github.com/smeet666/mcp-metacritic",
     "source": "github"
   },
-  "version": "1.1.0",
+  "version": "1.1.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "mcp-metacritic",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "transport": {
         "type": "stdio"
       },
@@ -48,8 +48,8 @@
     },
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/smeet666/mcp-metacritic/releases/download/v1.1.0/mcp-metacritic-1.1.0.mcpb",
-      "version": "1.1.0",
+      "identifier": "https://github.com/smeet666/mcp-metacritic/releases/download/v1.1.1/mcp-metacritic-1.1.1.mcpb",
+      "version": "1.1.1",
       "transport": {
         "type": "stdio"
       }
