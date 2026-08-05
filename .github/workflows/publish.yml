@@ -58,7 +58,7 @@ jobs:
         run: |
           mkdir -p stage/server stage/assets
           cp bundle/index.js stage/server/
-          cp manifest.json README.md LICENSE stage/
+          cp packaging/manifest.json README.md LICENSE stage/
           cp assets/icon-512.png stage/assets/
       - name: Pack and attach it to the release
         env:
