@@ -85,6 +85,20 @@ const intOf = (value: unknown): number | null => {
   return parsed === null ? null : Math.trunc(parsed);
 };
 
+/**
+ * An aggregate score off a listing row.
+ *
+ * The listing routes write 0 where an entry has no aggregate, while the detail
+ * route writes null for the same entry. Angel's Egg (1985) holds three positive
+ * reviews and no Metascore, and reading its listing row literally publishes
+ * "0/100" for a film critics liked. A score is only reported when the site has
+ * one, so 0 is read as the absence it stands for.
+ */
+const aggregate = (value: unknown): number | null => {
+  const parsed = num(value);
+  return parsed === 0 ? null : parsed;
+};
+
 /** Map the site's own type wording onto ours. */
 function kindOf(value: unknown): Kind | null {
   const type = str(value);
@@ -115,7 +129,8 @@ function toSummary(node: unknown): TitleSummary | null {
   // read, and a row with neither keeps null rather than inventing a zero.
   const userSummary = isObject(node.userScoreSummary) ? node.userScoreSummary : {};
   const userObject = isObject(node.userScore) ? node.userScore : {};
-  const userScore = num(userSummary.score) ?? num(userObject.score) ?? num(node.userScore);
+  const userScore =
+    aggregate(userSummary.score) ?? aggregate(userObject.score) ?? aggregate(node.userScore);
 
   return {
     id,
@@ -125,7 +140,7 @@ function toSummary(node: unknown): TitleSummary | null {
     year: intOf(node.premiereYear),
     releaseDate: str(node.releaseDate),
     rating: str(node.rating),
-    metascore: num(critic.score),
+    metascore: aggregate(critic.score),
     userScore,
     sourceUrl: titlePageUrl(kind, slug),
   };
@@ -239,7 +254,7 @@ export function parseDetail(raw: string, url: string, kind: Kind, slug: string):
     description: str(item.description),
     tagline: str(item.tagline),
     genres: toStringList(item.genres),
-    duration: intOf(item.duration),
+    duration: aggregate(intOf(item.duration)),
     imdbId: str(item.imdbId),
     networks: toStringList(item.networks),
     production: toCompanies(item.production),
@@ -265,7 +280,7 @@ export function parseScore(raw: string, url: string, what: string): ScoreSummary
   if (max === null) throw parseFailure(url, "the score carries no scale");
 
   return {
-    score: num(item.score),
+    score: aggregate(item.score),
     max,
     reviewCount: intOf(item.reviewCount),
     positiveCount: intOf(item.positiveCount),

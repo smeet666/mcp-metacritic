@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.2
+
+- Stop reporting an entry Metacritic has not scored as an entry scored zero.
+  The listing routes write 0 where the detail route writes null, so a search for
+  Angel's Egg came back with "0/100" for a film that holds three positive
+  reviews and no Metascore. A score of 0 is now read as the absence it stands
+  for, in search rows, in browse rows and in the score breakdown, and the same
+  applies to a runtime of 0 minutes on an entry that has not opened.
+
 ## 1.1.1
 
 - Stop published text from producing a line shaped like one this server writes.

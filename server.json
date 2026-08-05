@@ -7,24 +7,28 @@
     {
       "src": "https://raw.githubusercontent.com/smeet666/mcp-metacritic/main/assets/icon-128.png",
       "mimeType": "image/png",
-      "sizes": ["128x128"]
+      "sizes": [
+        "128x128"
+      ]
     },
     {
       "src": "https://raw.githubusercontent.com/smeet666/mcp-metacritic/main/assets/icon-512.png",
       "mimeType": "image/png",
-      "sizes": ["512x512"]
+      "sizes": [
+        "512x512"
+      ]
     }
   ],
   "repository": {
     "url": "https://github.com/smeet666/mcp-metacritic",
     "source": "github"
   },
-  "version": "1.1.1",
+  "version": "1.1.2",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "mcp-metacritic",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "transport": {
         "type": "stdio"
       },
@@ -49,7 +53,7 @@
     {
       "registryType": "mcpb",
       "identifier": "https://github.com/smeet666/mcp-metacritic/releases/download/v1.1.1/mcp-metacritic-1.1.1.mcpb",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "transport": {
         "type": "stdio"
       }
