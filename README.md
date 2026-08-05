@@ -3,6 +3,7 @@
 [![npm](https://img.shields.io/npm/v/mcp-metacritic.svg)](https://www.npmjs.com/package/mcp-metacritic)
 [![CI](https://github.com/smeet666/mcp-metacritic/actions/workflows/ci.yml/badge.svg)](https://github.com/smeet666/mcp-metacritic/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/mcp-metacritic.svg)](./LICENSE)
+[![Glama](https://glama.ai/mcp/servers/smeet666/mcp-metacritic/badges/score.svg)](https://glama.ai/mcp/servers/smeet666/mcp-metacritic)
 
 An [MCP](https://modelcontextprotocol.io) server for
 [Metacritic](https://www.metacritic.com). Search films, shows and games, read
