@@ -52,7 +52,7 @@
     },
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/smeet666/mcp-metacritic/releases/download/v1.1.1/mcp-metacritic-1.1.1.mcpb",
+      "identifier": "https://github.com/smeet666/mcp-metacritic/releases/download/v1.1.2/mcp-metacritic-1.1.2.mcpb",
       "version": "1.1.2",
       "transport": {
         "type": "stdio"
