@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.0
+
+- Refuse an argument no tool declares, instead of reading it and dropping it.
+  Every tool's published schema already marked `additionalProperties: false`,
+  but the server accepted an argument outside that schema and silently
+  ignored it, so a caller who mistyped a name got a confident answer computed
+  on the defaults rather than on what they asked for. Every tool now refuses
+  such a call under the `invalid_input` code, names the argument, and offers
+  the declared name when one is close: `search_titles` called with `limt`
+  points to `limit`, and `get_title` called with `chars` points to
+  `max_chars`.
+
 ## 1.1.2
 
 - Stop reporting an entry Metacritic has not scored as an entry scored zero.

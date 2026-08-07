@@ -8,6 +8,7 @@
 import { z } from "zod";
 import type { McClient, Sort } from "../mc/client.js";
 import type { Kind } from "../types.js";
+import { strictInput } from "./arguments.js";
 import {
   ok,
   renderTitleList,
@@ -26,7 +27,7 @@ export const browseTitlesDescription = [
   "Paging is approximate: Metacritic does not order tied entries stably, so an entry can appear on two consecutive pages. Deduplicate by slug rather than counting rows.",
 ].join(" ");
 
-export const browseTitlesInputShape = {
+export const browseTitlesInput = strictInput({
   kind: z.enum(["movie", "show", "game"]).default("movie").describe("Which catalogue to list."),
   sort: z
     .enum(["score", "recent", "popular"])
@@ -37,7 +38,7 @@ export const browseTitlesInputShape = {
   genre: z.string().optional().describe("Single genre name, such as Horror. Omit for all genres."),
   limit: z.number().int().min(1).max(50).default(20).describe("How many rows to return."),
   offset: z.number().int().min(0).default(0).describe("How many rows to skip, for paging."),
-};
+});
 
 export const browseTitlesOutputShape = {
   kind: z.string(),

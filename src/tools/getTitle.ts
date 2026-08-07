@@ -10,6 +10,7 @@ import { z } from "zod";
 import type { McClient } from "../mc/client.js";
 import { McError } from "../errors.js";
 import type { Kind, ScoreSummary, TitleDetail, WatchOffer } from "../types.js";
+import { strictInput } from "./arguments.js";
 import {
   kindSchema,
   ok,
@@ -34,7 +35,7 @@ export const getTitleDescription = [
   "A long description paginates: when 'truncated' is true, call again with 'offset' set to 'next_offset'.",
 ].join(" ");
 
-export const getTitleInputShape = {
+export const getTitleInput = strictInput({
   slug: z.string().min(1).describe("Identifier from search_titles, such as 'the-matrix'."),
   kind: kindSchema,
   sections: z
@@ -49,7 +50,7 @@ export const getTitleInputShape = {
     .default(4000)
     .describe("Character budget for the description."),
   offset: z.number().int().min(0).default(0).describe("Where to resume the description."),
-};
+});
 
 export const getTitleOutputShape = {
   title: titleSummarySchema,

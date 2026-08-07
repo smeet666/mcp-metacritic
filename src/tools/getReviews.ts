@@ -10,6 +10,7 @@ import { z } from "zod";
 import type { McClient } from "../mc/client.js";
 import type { Kind, Sentiment } from "../types.js";
 import { titlePageUrl } from "../mc/urls.js";
+import { strictInput } from "./arguments.js";
 import { kindSchema, ok, toToolError, truncate, type ToolResult } from "./shared.js";
 
 /** Quotes are third-party writing, so they are excerpts rather than reproductions. */
@@ -24,7 +25,7 @@ export const getReviewsDescription = [
   "Critic scores run to 100 and user scores to 10, so do not average the two together.",
 ].join(" ");
 
-export const getReviewsInputShape = {
+export const getReviewsInput = strictInput({
   slug: z.string().min(1).describe("Identifier from search_titles, such as 'the-matrix'."),
   kind: kindSchema,
   source: z
@@ -48,7 +49,7 @@ export const getReviewsInputShape = {
     .min(0)
     .default(0)
     .describe("How many of the sampled reviews to skip. The sample itself cannot be paged past."),
-};
+});
 
 const reviewSchema = z.object({
   quote: z.string().nullable().describe("Excerpt as published, truncated if long."),

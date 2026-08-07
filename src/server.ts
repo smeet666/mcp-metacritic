@@ -13,21 +13,21 @@ import { createLogger, loadConfig } from "./config.js";
 import { McClient } from "./mc/client.js";
 import {
   browseTitlesDescription,
-  browseTitlesInputShape,
+  browseTitlesInput,
   browseTitlesOutputShape,
   runBrowseTitles,
 } from "./tools/browseTitles.js";
 import type { BrowseTitlesArgs } from "./tools/browseTitles.js";
 import {
   getReviewsDescription,
-  getReviewsInputShape,
+  getReviewsInput,
   getReviewsOutputShape,
   runGetReviews,
 } from "./tools/getReviews.js";
 import type { GetReviewsArgs } from "./tools/getReviews.js";
 import {
   getTitleDescription,
-  getTitleInputShape,
+  getTitleInput,
   getTitleOutputShape,
   runGetTitle,
 } from "./tools/getTitle.js";
@@ -35,7 +35,7 @@ import type { GetTitleArgs } from "./tools/getTitle.js";
 import {
   runSearchTitles,
   searchTitlesDescription,
-  searchTitlesInputShape,
+  searchTitlesInput,
   searchTitlesOutputShape,
 } from "./tools/searchTitles.js";
 import type { SearchTitlesArgs } from "./tools/searchTitles.js";
@@ -87,7 +87,7 @@ export function createServer(options: CreateServerOptions = {}): McpServer {
     {
       title: "Search Metacritic",
       description: searchTitlesDescription,
-      inputSchema: z.object(searchTitlesInputShape),
+      inputSchema: searchTitlesInput,
       outputSchema: z.object(searchTitlesOutputShape),
       annotations: READ_ONLY,
     },
@@ -99,7 +99,7 @@ export function createServer(options: CreateServerOptions = {}): McpServer {
     {
       title: "Read an entry",
       description: getTitleDescription,
-      inputSchema: z.object(getTitleInputShape),
+      inputSchema: getTitleInput,
       outputSchema: z.object(getTitleOutputShape),
       annotations: READ_ONLY,
     },
@@ -111,7 +111,7 @@ export function createServer(options: CreateServerOptions = {}): McpServer {
     {
       title: "Read reviews",
       description: getReviewsDescription,
-      inputSchema: z.object(getReviewsInputShape),
+      inputSchema: getReviewsInput,
       outputSchema: z.object(getReviewsOutputShape),
       annotations: READ_ONLY,
     },
@@ -123,7 +123,7 @@ export function createServer(options: CreateServerOptions = {}): McpServer {
     {
       title: "Browse rankings",
       description: browseTitlesDescription,
-      inputSchema: z.object(browseTitlesInputShape),
+      inputSchema: browseTitlesInput,
       outputSchema: z.object(browseTitlesOutputShape),
       annotations: READ_ONLY,
     },

@@ -9,6 +9,7 @@
 import { z } from "zod";
 import type { McClient } from "../mc/client.js";
 import type { Kind } from "../types.js";
+import { strictInput } from "./arguments.js";
 import {
   ok,
   renderTitleList,
@@ -27,14 +28,14 @@ export const searchTitlesDescription = [
   "This searches titles only. It cannot find an entry from a plot detail, a person or a studio.",
 ].join(" ");
 
-export const searchTitlesInputShape = {
+export const searchTitlesInput = strictInput({
   query: z.string().min(1).describe("Title or part of one, for example 'the matrix'."),
   kind: z
     .enum(["movie", "show", "game", "any"])
     .default("any")
     .describe("Restrict results to one catalogue. Metacritic searches all three at once."),
   limit: z.number().int().min(1).max(50).default(10).describe("How many rows to return."),
-};
+});
 
 export const searchTitlesOutputShape = {
   query: z.string(),
