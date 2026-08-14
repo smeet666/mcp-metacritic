@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "mcp-metacritic",
   "display_name": "Metacritic",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "MCP server for Metacritic. Search films, shows and games, read Metascores and critic reviews with attribution. No API key required.",
   "long_description": "Search films, shows and games, read Metascores and the critic reviews behind them. No API key, no account.",
   "author": {
