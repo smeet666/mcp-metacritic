@@ -17,12 +17,10 @@ const INVALID_INPUT = "invalid_input";
 export function strictInput<Shape extends z.ZodRawShape>(shape: Shape) {
   const declared = Object.keys(shape);
 
-  const errorMap: z.ZodErrorMap = (issue, ctx) =>
-    issue.code === z.ZodIssueCode.unrecognized_keys
-      ? { message: unknownArgumentMessage(issue.keys, declared) }
-      : { message: ctx.defaultError };
-
-  return z.strictObject(shape, { errorMap });
+  return z.strictObject(shape, {
+    error: (issue) =>
+      issue.code === "unrecognized_keys" ? unknownArgumentMessage(issue.keys, declared) : undefined,
+  });
 }
 
 function unknownArgumentMessage(keys: readonly string[], declared: readonly string[]): string {
