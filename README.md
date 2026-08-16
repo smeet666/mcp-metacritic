@@ -5,7 +5,7 @@
 [![license](https://img.shields.io/npm/l/mcp-metacritic.svg)](./LICENSE)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-6E56CF)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.smeet666/mcp-metacritic)
 [![Glama](https://glama.ai/mcp/servers/smeet666/mcp-metacritic/badges/score.svg)](https://glama.ai/mcp/servers/smeet666/mcp-metacritic)
-[![M8ven Score](https://m8ven.ai/badge/mcp/smeet666-mcp-metacritic-1yvblv)](https://m8ven.ai/mcp/smeet666-mcp-metacritic-1yvblv)
+[![M8ven](https://m8ven.ai/badge/mcp/smeet666-mcp-metacritic-1yvblv?variant=verified)](https://m8ven.ai/mcp/smeet666-mcp-metacritic-1yvblv)
 <!-- m8ven-verify: 01151bc5a8514e55175f063339bedc6f -->
 [![Install in Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=metacritic&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIm1jcC1tZXRhY3JpdGljIl19)
 [![Install in VS Code](https://img.shields.io/badge/VS_Code-Install-0098FF?style=flat&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=metacritic&config=%7B%22name%22%3A%22metacritic%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22mcp-metacritic%22%5D%7D)
