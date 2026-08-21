@@ -1,9 +1,11 @@
 # mcp-metacritic
 
 ## Tagline
+
 Metascores, audience scores and critic reviews for films, shows and games.
 
 ## Description
+
 An MCP server for Metacritic. Search films, shows and games, read what critics
 scored them and what they wrote, and browse rankings when there is no title to
 look up.
@@ -18,6 +20,7 @@ Critic reviews come back with the publication and a link to the original
 article, so a quote can be attributed to the person who wrote it.
 
 ## Setup Requirements
+
 - `MC_USER_AGENT` (optional): Identify your own client. The project's own identifier is appended.
 - `MC_MIN_INTERVAL_MS` (optional): Minimum gap between requests. Default 1000, and values below 500 are refused.
 - `MC_TIMEOUT_MS` (optional): Per-request deadline. Default 15000.
@@ -27,9 +30,11 @@ article, so a quote can be attributed to the person who wrote it.
 No API key and no account are needed.
 
 ## Category
+
 Content & Media
 
 ## Features
+
 - Search films, shows and games in one call, or restrict to one catalogue
 - The critic Metascore comes back with the search, so a verdict costs one request
 - Read one entry section by section: description, scores, awards, production, networks, where to watch
@@ -41,6 +46,7 @@ Content & Media
 - Attribution and a source link on every result
 
 ## Getting Started
+
 - "How was Dune Part Two received by critics?"
 - "What did reviewers dislike about Cyberpunk 2077 at launch?"
 - "What are the best rated horror films of all time?"
@@ -50,7 +56,9 @@ Content & Media
 - Tool: browse_titles — Lists rankings by score, recency or popularity
 
 ## Tags
+
 movies, tv, games, reviews, ratings, metascore, metacritic, criticism, no-api-key
 
 ## Documentation URL
+
 https://github.com/smeet666/mcp-metacritic#readme
