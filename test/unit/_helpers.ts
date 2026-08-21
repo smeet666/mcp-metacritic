@@ -95,7 +95,9 @@ export function makeFetch(
 
     const raw = responder(url, index);
     const scripted: ScriptedResponse = typeof raw === "string" ? { body: raw } : raw;
-    if (scripted.throws !== undefined) throw scripted.throws;
+    if (scripted.throws !== undefined) {
+      throw scripted.throws;
+    }
 
     return new Response(scripted.body ?? "", {
       status: scripted.status ?? 200,

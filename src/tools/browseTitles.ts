@@ -84,7 +84,9 @@ export async function runBrowseTitles(
 
     const results = data.titles.map(toTitleSummaryOut);
     const notes: string[] = [];
-    if (cached) notes.push("Served from this server's short-lived in-memory cache.");
+    if (cached) {
+      notes.push("Served from this server's short-lived in-memory cache.");
+    }
     if (results.length === 0) {
       notes.push(
         args.genre

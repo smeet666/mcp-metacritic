@@ -66,7 +66,9 @@ describe("ok()", () => {
     const text = textOf(ok({}, longBody(10_000), { notes }));
 
     expect(text.length).toBeLessThanOrEqual(MAX_TEXT_MIRROR_CHARS);
-    for (const note of notes) expect(text).toContain(note);
+    for (const note of notes) {
+      expect(text).toContain(note);
+    }
     expect(text.endsWith(ATTRIBUTION)).toBe(true);
   });
 

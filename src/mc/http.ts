@@ -43,7 +43,7 @@ export async function fetchText(url: string, deps: HttpDeps): Promise<string> {
   const { config, limiter, logger } = deps;
   const doFetch = deps.fetchImpl ?? fetch;
 
-  return limiter.schedule(async () => {
+  return await limiter.schedule(async () => {
     let lastError: McError | undefined;
 
     // Set when the site says how long to stay away; it replaces our own guess
@@ -98,8 +98,12 @@ export async function fetchText(url: string, deps: HttpDeps): Promise<string> {
       // An unknown slug is answered with a 404 carrying an error envelope. It is
       // reported as an absence rather than as a transport problem, because the
       // caller asked for something specific and needs to know it is not there.
-      if (status === 404) throw notFound(url, "that request");
-      if (status >= 400) throw upstreamError(url, status);
+      if (status === 404) {
+        throw notFound(url, "that request");
+      }
+      if (status >= 400) {
+        throw upstreamError(url, status);
+      }
 
       // An empty body is not a valid answer from any of these endpoints, and is
       // how a stressed edge sometimes refuses. Retrying is safer than handing an
@@ -137,16 +141,24 @@ export async function fetchText(url: string, deps: HttpDeps): Promise<string> {
 
 /** `Retry-After` carries either seconds or an HTTP date. */
 function parseRetryAfter(raw: string | null): number | null {
-  if (!raw) return null;
+  if (!raw) {
+    return null;
+  }
   const seconds = Number(raw.trim());
-  if (Number.isFinite(seconds) && seconds >= 0) return Math.round(seconds * 1000);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.round(seconds * 1000);
+  }
   const when = Date.parse(raw);
-  if (Number.isNaN(when)) return null;
+  if (Number.isNaN(when)) {
+    return null;
+  }
   return Math.max(0, when - Date.now());
 }
 
 function asTransportError(error: unknown, url: string): McError {
-  if (error instanceof McError) return error;
+  if (error instanceof McError) {
+    return error;
+  }
   const name = error instanceof Error ? error.name : "";
   if (name === "TimeoutError" || name === "AbortError") {
     return new McError("timeout", "Metacritic did not answer in time.", {

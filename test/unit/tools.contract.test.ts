@@ -57,12 +57,16 @@ afterEach(async () => {
 /** Walks any structured payload, so a leak cannot hide in a nested field. */
 function walk(value: unknown, visit: (node: any) => void): void {
   if (Array.isArray(value)) {
-    for (const entry of value) walk(entry, visit);
+    for (const entry of value) {
+      walk(entry, visit);
+    }
     return;
   }
   if (value && typeof value === "object") {
     visit(value);
-    for (const entry of Object.values(value)) walk(entry, visit);
+    for (const entry of Object.values(value)) {
+      walk(entry, visit);
+    }
   }
 }
 
@@ -685,8 +689,12 @@ describe("every score that reaches a model", () => {
     });
 
     for (const row of result.structuredContent.results) {
-      if (row.metascore !== null) expect(row.metascore).toBeGreaterThan(10);
-      if (row.user_score !== null) expect(row.user_score).toBeLessThanOrEqual(10);
+      if (row.metascore !== null) {
+        expect(row.metascore).toBeGreaterThan(10);
+      }
+      if (row.user_score !== null) {
+        expect(row.user_score).toBeLessThanOrEqual(10);
+      }
     }
   });
 });

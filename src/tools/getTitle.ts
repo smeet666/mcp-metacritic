@@ -105,7 +105,9 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
     const notes: string[] = [];
 
     const detail = await client.getDetail(args.kind, args.slug);
-    if (detail.cached) notes.push("Served from this server's short-lived in-memory cache.");
+    if (detail.cached) {
+      notes.push("Served from this server's short-lived in-memory cache.");
+    }
     const item = detail.data;
 
     let criticScore: ScoreSummary | null = null;
@@ -161,7 +163,9 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
       notes,
     };
 
-    if (wanted.has("awards")) structured.awards = item.awards;
+    if (wanted.has("awards")) {
+      structured.awards = item.awards;
+    }
 
     const PRODUCTION_CAP = 25;
     const production = wanted.has("production") ? item.production.slice(0, PRODUCTION_CAP) : [];
@@ -174,11 +178,15 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
       }
     }
 
-    if (wanted.has("networks")) structured.networks = item.networks;
+    if (wanted.has("networks")) {
+      structured.networks = item.networks;
+    }
     const offers = wanted.has("where_to_watch")
       ? await watchOffers(client, item, args.kind, notes)
       : [];
-    if (wanted.has("where_to_watch")) structured.where_to_watch = offers;
+    if (wanted.has("where_to_watch")) {
+      structured.where_to_watch = offers;
+    }
 
     return ok(structured, render(item, slice, criticScore, userScore, wanted, offers, production), {
       notes,
@@ -268,8 +276,12 @@ function render(
 
   const lines = [header];
   if (wanted.has("basic")) {
-    if (item.genres.length > 0) lines.push(`Genres: ${item.genres.join(", ")}`);
-    if (item.duration !== null) lines.push(`Runtime: ${item.duration} min`);
+    if (item.genres.length > 0) {
+      lines.push(`Genres: ${item.genres.join(", ")}`);
+    }
+    if (item.duration !== null) {
+      lines.push(`Runtime: ${item.duration} min`);
+    }
   }
   if (critic?.score !== null && critic !== null) {
     lines.push(
@@ -281,7 +293,9 @@ function render(
       `Users: ${user.score}/${user.max} from ${user.reviewCount ?? "?"} ratings${user.sentiment ? ` (${user.sentiment})` : ""}`,
     );
   }
-  if (description) lines.push("", description);
+  if (description) {
+    lines.push("", description);
+  }
 
   if (wanted.has("awards") && item.awards.length > 0) {
     lines.push("", "Awards:");
@@ -311,7 +325,9 @@ function render(
 
   if (wanted.has("where_to_watch")) {
     lines.push("", offers.length === 0 ? "Where to watch: nothing listed." : "Where to watch:");
-    for (const o of offers) lines.push(`  ${o.provider} (${o.kind})${o.url ? ` — ${o.url}` : ""}`);
+    for (const o of offers) {
+      lines.push(`  ${o.provider} (${o.kind})${o.url ? ` — ${o.url}` : ""}`);
+    }
   }
 
   return lines.join("\n");
