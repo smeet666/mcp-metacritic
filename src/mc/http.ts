@@ -32,6 +32,84 @@ export interface HttpDeps {
 }
 
 /**
+ * What one answer from Metacritic amounts to.
+ *
+ * Three outcomes and no fourth: the body is usable, the thing asked for is not
+ * there, or the edge is refusing for now. Two of those refusals arrive under a
+ * success status — an empty body, and HTML where JSON belongs — and reading
+ * them as answers hands the parser a document that reads as "nothing found".
+ */
+type Answer =
+  | { kind: "usable" }
+  | { kind: "refused"; error: McError }
+  | { kind: "again"; error: McError; waitMs: number | null; penalise: boolean; because: string };
+
+function readAnswer(
+  url: string,
+  status: number,
+  body: string,
+  retryAfterMs: number | null,
+  ownGuessMs: number,
+): Answer {
+  if (status === 429 || status === 503 || status === 403) {
+    return {
+      kind: "again",
+      error: rateLimited(url, retryAfterMs ?? ownGuessMs),
+      // A server that says when to come back knows better than our own guess.
+      waitMs: retryAfterMs,
+      penalise: true,
+      because: `refused with ${status}`,
+    };
+  }
+  if (status >= 500) {
+    return {
+      kind: "again",
+      error: upstreamError(url, status),
+      waitMs: null,
+      penalise: false,
+      because: `status ${status}`,
+    };
+  }
+  // An unknown slug is answered with a 404 carrying an error envelope. It is
+  // reported as an absence rather than as a transport problem, because the
+  // caller asked for something specific and needs to know it is not there.
+  if (status === 404) {
+    return { kind: "refused", error: notFound(url, "that request") };
+  }
+  if (status >= 400) {
+    return { kind: "refused", error: upstreamError(url, status) };
+  }
+
+  const trimmed = body.trim();
+  if (trimmed === "") {
+    return {
+      kind: "again",
+      error: rateLimited(url, ownGuessMs),
+      waitMs: null,
+      penalise: true,
+      because: "empty body, treated as a refusal",
+    };
+  }
+
+  // Every route answers with JSON. An HTML body under a success status is the
+  // edge answering instead of the application, usually a challenge or an error
+  // page, and it clears on its own. Retried for that reason, but reported as a
+  // parse failure if it never does: a body that is persistently not JSON means
+  // the shape moved, and that is worth a bug report.
+  if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+    return {
+      kind: "again",
+      error: parseFailure(url, "the body is not JSON"),
+      waitMs: retryAfterMs,
+      penalise: true,
+      because: "non-JSON body",
+    };
+  }
+
+  return { kind: "usable" };
+}
+
+/**
  * Fetch one URL as text, retrying transient conditions.
  *
  * The retry loop runs inside a single limiter slot, so a queued request cannot
@@ -81,53 +159,17 @@ export async function fetchText(url: string, deps: HttpDeps): Promise<string> {
         continue;
       }
 
-      if (status === 429 || status === 503 || status === 403) {
-        limiter.penalize();
-        // A server that says when to come back knows better than our own guess.
-        askedWaitMs = retryAfterMs;
-        lastError = rateLimited(url, retryAfterMs ?? backoffDelay(attempt));
-        logger.info(
-          `refused on ${url} with ${status}, interval now ${limiter.currentIntervalMs}ms`,
-        );
-        continue;
+      const verdict = readAnswer(url, status, body, retryAfterMs, backoffDelay(attempt));
+      if (verdict.kind === "refused") {
+        throw verdict.error;
       }
-      if (status >= 500) {
-        lastError = upstreamError(url, status);
-        continue;
-      }
-      // An unknown slug is answered with a 404 carrying an error envelope. It is
-      // reported as an absence rather than as a transport problem, because the
-      // caller asked for something specific and needs to know it is not there.
-      if (status === 404) {
-        throw notFound(url, "that request");
-      }
-      if (status >= 400) {
-        throw upstreamError(url, status);
-      }
-
-      // An empty body is not a valid answer from any of these endpoints, and is
-      // how a stressed edge sometimes refuses. Retrying is safer than handing an
-      // empty document to the parser, which would read as "nothing found".
-      const trimmed = body.trim();
-      if (trimmed === "") {
-        limiter.penalize();
-        lastError = rateLimited(url, backoffDelay(attempt));
-        logger.info(`empty body on ${url}, treating as a refusal`);
-        continue;
-      }
-
-      // Every route answers with JSON. An HTML body under a success status is
-      // the edge answering instead of the application, usually a challenge or
-      // an error page, and it clears on its own. Retrying is right; reporting a
-      // parse failure would send the caller to the bug tracker for an outage.
-      if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
-        limiter.penalize();
-        // Retried because an edge challenge clears on its own, but reported as a
-        // parse failure if it never does: a body that is persistently not JSON
-        // means the shape moved, and that is worth a bug report.
-        lastError = parseFailure(url, "the body is not JSON");
-        askedWaitMs = retryAfterMs;
-        logger.info(`non-JSON body on ${url}, retrying`);
+      if (verdict.kind === "again") {
+        if (verdict.penalise) {
+          limiter.penalize();
+          logger.info(`${verdict.because} on ${url}, interval now ${limiter.currentIntervalMs}ms`);
+        }
+        askedWaitMs = verdict.waitMs;
+        lastError = verdict.error;
         continue;
       }
 

@@ -91,7 +91,11 @@ export function makeFetch(
   const impl = (async (input: any, init?: RequestInit) => {
     const url = typeof input === "string" ? input : String(input?.url ?? input);
     const index = calls.length;
-    calls.push({ url, init, at: Date.now() });
+    // The moment is read from the monotonic clock rather than the wall clock:
+    // a wall clock can be stepped backwards by a time sync, and a gap measured
+    // across that step comes out negative and fails a pacing test that never
+    // had anything wrong with it.
+    calls.push({ url, init, at: performance.now() });
 
     const raw = responder(url, index);
     const scripted: ScriptedResponse = typeof raw === "string" ? { body: raw } : raw;
