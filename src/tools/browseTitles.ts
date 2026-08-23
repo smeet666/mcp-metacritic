@@ -18,6 +18,17 @@ import {
   type ToolResult,
 } from "./shared.js";
 
+/** What the list is ordered on, in the words a reader would use for it. */
+function orderedBy(sort: string): string {
+  if (sort === "score") {
+    return " by critic score";
+  }
+  if (sort === "recent") {
+    return " by release date";
+  }
+  return " by current popularity";
+}
+
 export const browseTitlesDescription = [
   "List films, shows or games by score, by release date or by current popularity.",
   "Use this when there is no specific title to look up: best rated, newest, what people are looking at now.",
@@ -84,7 +95,9 @@ export async function runBrowseTitles(
 
     const results = data.titles.map(toTitleSummaryOut);
     const notes: string[] = [];
-    if (cached) notes.push("Served from this server's short-lived in-memory cache.");
+    if (cached) {
+      notes.push("Served from this server's short-lived in-memory cache.");
+    }
     if (results.length === 0) {
       notes.push(
         args.genre
@@ -105,11 +118,7 @@ export async function runBrowseTitles(
     const heading = [
       args.genre ? `${args.genre} ` : "",
       `${args.kind}s`,
-      args.sort === "score"
-        ? " by critic score"
-        : args.sort === "recent"
-          ? " by release date"
-          : " by current popularity",
+      orderedBy(args.sort),
     ].join("");
 
     const summary =

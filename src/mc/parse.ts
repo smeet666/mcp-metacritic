@@ -48,12 +48,16 @@ export function envelope(raw: string, url: string, what: string): Json {
     throw parseFailure(url, "the body is not valid JSON");
   }
 
-  if (!isObject(body)) throw parseFailure(url, "the body is not an object");
+  if (!isObject(body)) {
+    throw parseFailure(url, "the body is not an object");
+  }
 
   const errors = body[FIELD.errors];
   if (Array.isArray(errors) && errors.length > 0) {
     const first = isObject(errors[0]) ? errors[0] : {};
-    if (first.code === 404) throw notFound(url, what);
+    if (first.code === 404) {
+      throw notFound(url, what);
+    }
     throw parseFailure(
       url,
       `the site reported ${String(first.reason ?? first.code ?? "an error")}`,
@@ -61,21 +65,29 @@ export function envelope(raw: string, url: string, what: string): Json {
   }
 
   const data = body[FIELD.data];
-  if (!isObject(data)) throw parseFailure(url, "the response carries no data object");
+  if (!isObject(data)) {
+    throw parseFailure(url, "the response carries no data object");
+  }
   return data;
 }
 
 const str = (value: unknown): string | null => {
-  if (typeof value !== "string") return null;
+  if (typeof value !== "string") {
+    return null;
+  }
   const trimmed = value.trim();
   return trimmed === "" ? null : trimmed;
 };
 
 const num = (value: unknown): number | null => {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
   if (typeof value === "string") {
     const parsed = Number(value);
-    if (Number.isFinite(parsed)) return parsed;
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
   }
   return null;
 };
@@ -102,9 +114,15 @@ const aggregate = (value: unknown): number | null => {
 /** Map the site's own type wording onto ours. */
 function kindOf(value: unknown): Kind | null {
   const type = str(value);
-  if (type === SEARCH_TYPE.movie) return "movie";
-  if (type === SEARCH_TYPE.show) return "show";
-  if (type === SEARCH_TYPE.game) return "game";
+  if (type === SEARCH_TYPE.movie) {
+    return "movie";
+  }
+  if (type === SEARCH_TYPE.show) {
+    return "show";
+  }
+  if (type === SEARCH_TYPE.game) {
+    return "game";
+  }
   return null;
 }
 
@@ -114,13 +132,17 @@ function kindOf(value: unknown): Kind | null {
  * still failing loudly when every entry is unreadable.
  */
 function toSummary(node: unknown): TitleSummary | null {
-  if (!isObject(node)) return null;
+  if (!isObject(node)) {
+    return null;
+  }
 
   const id = intOf(node.id);
   const slug = str(node.slug);
   const title = str(node.title);
   const kind = kindOf(node.type);
-  if (id === null || !slug || !title || !kind) return null;
+  if (id === null || !slug || !title || !kind) {
+    return null;
+  }
 
   const critic = isObject(node.criticScoreSummary) ? node.criticScoreSummary : {};
 
@@ -150,12 +172,16 @@ function toSummary(node: unknown): TitleSummary | null {
 export function parseTitlePage(raw: string, url: string, what: string): TitlePage {
   const data = envelope(raw, url, what);
   const items = data[FIELD.items];
-  if (!Array.isArray(items)) throw parseFailure(url, "the response carries no items array");
+  if (!Array.isArray(items)) {
+    throw parseFailure(url, "the response carries no items array");
+  }
 
   const titles: TitleSummary[] = [];
   for (const node of items) {
     const row = toSummary(node);
-    if (row) titles.push(row);
+    if (row) {
+      titles.push(row);
+    }
   }
 
   if (items.length > 0 && titles.length === 0) {
@@ -180,15 +206,21 @@ export function parseTitlePage(raw: string, url: string, what: string): TitlePag
  */
 function toCompanies(value: unknown): Company[] {
   const source = isObject(value) ? value.companies : value;
-  if (!Array.isArray(source)) return [];
+  if (!Array.isArray(source)) {
+    return [];
+  }
 
   const seen = new Set<string>();
   const out: Company[] = [];
   for (const node of source) {
     const name = isObject(node) ? str(node.name) : str(node);
-    if (!name) continue;
+    if (!name) {
+      continue;
+    }
     const key = name.toLowerCase();
-    if (seen.has(key)) continue;
+    if (seen.has(key)) {
+      continue;
+    }
     seen.add(key);
     out.push({ name, id: isObject(node) ? intOf(node.id) : null });
   }
@@ -196,11 +228,15 @@ function toCompanies(value: unknown): Company[] {
 }
 
 function toStringList(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
+  if (!Array.isArray(value)) {
+    return [];
+  }
   const out: string[] = [];
   for (const node of value) {
     const name = isObject(node) ? str(node.name) : str(node);
-    if (name) out.push(name);
+    if (name) {
+      out.push(name);
+    }
   }
   return out;
 }
@@ -212,12 +248,18 @@ function toStringList(value: unknown): string[] {
  * "zero wins" are the same here, but only the source can say which it meant.
  */
 function toAwards(value: unknown): Award[] {
-  if (!Array.isArray(value)) return [];
+  if (!Array.isArray(value)) {
+    return [];
+  }
   const out: Award[] = [];
   for (const node of value) {
-    if (!isObject(node)) continue;
+    if (!isObject(node)) {
+      continue;
+    }
     const ceremony = str(node.awardEvent);
-    if (!ceremony) continue;
+    if (!ceremony) {
+      continue;
+    }
     out.push({
       ceremony,
       wins: intOf(node.wins),
@@ -230,13 +272,17 @@ function toAwards(value: unknown): Award[] {
 export function parseDetail(raw: string, url: string, kind: Kind, slug: string): TitleDetail {
   const data = envelope(raw, url, `${kind} "${slug}"`);
   const item = data[FIELD.item];
-  if (!isObject(item)) throw parseFailure(url, "the response carries no item object");
+  if (!isObject(item)) {
+    throw parseFailure(url, "the response carries no item object");
+  }
 
   // The detail route omits `type`, so the kind comes from the caller, who chose
   // the route. Building the summary by hand keeps that difference explicit.
   const id = intOf(item.id);
   const title = str(item.title);
-  if (id === null || !title) throw parseFailure(url, "the entry has no id or no title");
+  if (id === null || !title) {
+    throw parseFailure(url, "the entry has no id or no title");
+  }
 
   const critic = isObject(item.criticScoreSummary) ? item.criticScoreSummary : {};
 
@@ -274,10 +320,14 @@ export function parseDetail(raw: string, url: string, kind: Kind, slug: string):
 export function parseScore(raw: string, url: string, what: string): ScoreSummary {
   const data = envelope(raw, url, what);
   const item = data[FIELD.item];
-  if (!isObject(item)) throw parseFailure(url, "the response carries no score object");
+  if (!isObject(item)) {
+    throw parseFailure(url, "the response carries no score object");
+  }
 
   const max = num(item.max);
-  if (max === null) throw parseFailure(url, "the score carries no scale");
+  if (max === null) {
+    throw parseFailure(url, "the score carries no scale");
+  }
 
   return {
     score: aggregate(item.score),
@@ -292,7 +342,9 @@ export function parseScore(raw: string, url: string, what: string): ScoreSummary
 
 function reviewBucket(data: Json, url: string, sentiment: Sentiment): unknown[] {
   const item = data[FIELD.item];
-  if (!isObject(item)) throw parseFailure(url, "the response carries no reviews object");
+  if (!isObject(item)) {
+    throw parseFailure(url, "the response carries no reviews object");
+  }
 
   const bucket = item[bucketFor(sentiment)];
   // A bucket that does not exist means the site stopped grouping reviews this
@@ -314,12 +366,16 @@ export function parseCriticReviews(
 
   const reviews: CriticReview[] = [];
   for (const node of bucket) {
-    if (!isObject(node)) continue;
+    if (!isObject(node)) {
+      continue;
+    }
     const quote = str(node.quote);
     const publication = str(node.publicationName);
     // A quote with no publication cannot be attributed, and attribution is the
     // condition under which this content is worth passing on at all.
-    if (!quote || !publication) continue;
+    if (!quote || !publication) {
+      continue;
+    }
     reviews.push({
       quote,
       score: num(node.score),
@@ -352,9 +408,13 @@ export function parseUserReviews(
 
   const reviews: UserReview[] = [];
   for (const node of bucket) {
-    if (!isObject(node)) continue;
+    if (!isObject(node)) {
+      continue;
+    }
     const quote = str(node.quote);
-    if (!quote) continue;
+    if (!quote) {
+      continue;
+    }
     reviews.push({ quote, score: num(node.score), date: str(node.date) });
   }
 
@@ -378,10 +438,14 @@ export function parseUserReviews(
  * links, so the destination is extracted and the wrapper dropped.
  */
 function unwrapLink(link: string | null): string | null {
-  if (!link) return null;
+  if (!link) {
+    return null;
+  }
   try {
     const target = new URL(link).searchParams.get("r");
-    if (target && /^https?:\/\//i.test(target)) return target;
+    if (target && /^https?:\/\//i.test(target)) {
+      return target;
+    }
   } catch {
     // Not a URL this function understands; the original is still usable.
   }
@@ -392,15 +456,23 @@ function unwrapLink(link: string | null): string | null {
 export function parseOffers(raw: string, url: string, what: string): WatchOffer[] {
   const data = envelope(raw, url, what);
   const item = data[FIELD.item];
-  if (!isObject(item)) throw parseFailure(url, "the response carries no offers object");
+  if (!isObject(item)) {
+    throw parseFailure(url, "the response carries no offers object");
+  }
 
   const offers: WatchOffer[] = [];
   for (const [group, value] of Object.entries(item)) {
-    if (!Array.isArray(value)) continue;
+    if (!Array.isArray(value)) {
+      continue;
+    }
     for (const node of value) {
-      if (!isObject(node)) continue;
+      if (!isObject(node)) {
+        continue;
+      }
       const provider = str(node.providerName);
-      if (!provider) continue;
+      if (!provider) {
+        continue;
+      }
       offers.push({ provider, kind: group, url: unwrapLink(str(node.link)) });
     }
   }

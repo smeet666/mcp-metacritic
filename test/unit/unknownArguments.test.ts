@@ -17,7 +17,7 @@ import { createServer } from "../../src/server.js";
 import { happyRouter, silentLogger, testConfig } from "./_helpers.js";
 
 /** One valid call per tool, so a refusal is never mistaken for a broken tool. */
-const CALLS: Array<[string, Record<string, unknown>]> = [
+const CALLS: [string, Record<string, unknown>][] = [
   ["search_titles", { query: "lantern" }],
   ["get_title", { slug: "blue-horizon", kind: "movie" }],
   ["get_reviews", { slug: "blue-horizon", kind: "movie" }],

@@ -123,7 +123,9 @@ export async function runGetReviews(client: McClient, args: GetReviewsArgs): Pro
     }));
 
     const notes: string[] = [];
-    if (cached) notes.push("Served from this server's short-lived in-memory cache.");
+    if (cached) {
+      notes.push("Served from this server's short-lived in-memory cache.");
+    }
     if (reviews.length === 0) {
       if (args.offset > 0 && args.offset >= data.reviews.length) {
         notes.push(

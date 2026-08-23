@@ -23,7 +23,9 @@ type Params = Record<string, string | number | undefined>;
 function build(path: string, params: Params): string {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== "") query.set(key, String(value));
+    if (value !== undefined && value !== "") {
+      query.set(key, String(value));
+    }
   }
   const suffix = query.toString();
   return suffix ? `${API_BASE}${path}?${suffix}` : `${API_BASE}${path}`;

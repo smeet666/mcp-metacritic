@@ -157,13 +157,17 @@ export function toToolError(error: unknown): ToolResult {
       : new McError("network_error", error instanceof Error ? error.message : String(error));
 
   const lines = [`[${known.code}] ${known.message}`];
-  if (known.details.hint) lines.push(`Hint: ${known.details.hint}`);
+  if (known.details.hint) {
+    lines.push(`Hint: ${known.details.hint}`);
+  }
 
   return { content: [{ type: "text", text: lines.join("\n") }], isError: true };
 }
 
 export function truncate(text: string, maxChars: number): string {
-  if (text.length <= maxChars) return text;
+  if (text.length <= maxChars) {
+    return text;
+  }
   return `${text.slice(0, maxChars - 1).trimEnd()}…`;
 }
 
@@ -178,7 +182,9 @@ export function sliceAtLineBoundary(
   maxChars: number,
 ): { slice: string; nextOffset: number | null } {
   const rest = text.slice(offset);
-  if (rest.length <= maxChars) return { slice: rest, nextOffset: null };
+  if (rest.length <= maxChars) {
+    return { slice: rest, nextOffset: null };
+  }
 
   const window = rest.slice(0, maxChars);
   const lastBreak = window.lastIndexOf("\n");
@@ -187,7 +193,9 @@ export function sliceAtLineBoundary(
   // Never cut between the two halves of a surrogate pair: both pages would show
   // a replacement character and no offset could ever reassemble it.
   const code = rest.charCodeAt(cut - 1);
-  if (code >= 0xd800 && code <= 0xdbff) cut -= 1;
+  if (code >= 0xd800 && code <= 0xdbff) {
+    cut -= 1;
+  }
 
   return { slice: rest.slice(0, cut), nextOffset: offset + cut };
 }

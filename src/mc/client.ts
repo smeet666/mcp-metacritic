@@ -112,7 +112,7 @@ export class McClient {
    */
   async search(query: string, limit: number, offset: number): Promise<Outcome<TitlePage>> {
     const url = searchUrl(query, limit, offset);
-    return this.fetchParsed(url, this.catalogueCache, (body) =>
+    return await this.fetchParsed(url, this.catalogueCache, (body) =>
       parseTitlePage(body, url, `the query "${query}"`),
     );
   }
@@ -125,7 +125,7 @@ export class McClient {
     offset: number;
   }): Promise<Outcome<TitlePage>> {
     const url = browseUrl(options);
-    return this.fetchParsed(url, this.catalogueCache, (body) =>
+    return await this.fetchParsed(url, this.catalogueCache, (body) =>
       parseTitlePage(body, url, `that ${options.kind} listing`),
     );
   }
@@ -135,7 +135,7 @@ export class McClient {
     // The trimmed form is what reached the network, so it is also what the
     // public link and the echoed slug must be built from.
     const clean = slug.trim();
-    return this.fetchParsed(url, this.catalogueCache, (body) =>
+    return await this.fetchParsed(url, this.catalogueCache, (body) =>
       parseDetail(body, url, kind, clean),
     );
   }
@@ -146,7 +146,7 @@ export class McClient {
     source: "critic" | "user",
   ): Promise<Outcome<ScoreSummary>> {
     const url = scoreUrl(kind, slug, source);
-    return this.fetchParsed(url, this.scoresCache, (body) =>
+    return await this.fetchParsed(url, this.scoresCache, (body) =>
       parseScore(body, url, `the ${source} score of ${kind} "${slug}"`),
     );
   }
@@ -159,7 +159,7 @@ export class McClient {
     offset: number;
   }): Promise<Outcome<ReviewPage<CriticReview>>> {
     const url = reviewsUrl({ ...options, source: "critic" });
-    return this.fetchParsed(
+    return await this.fetchParsed(
       url,
       this.scoresCache,
       (body) =>
@@ -181,7 +181,7 @@ export class McClient {
     offset: number;
   }): Promise<Outcome<ReviewPage<UserReview>>> {
     const url = reviewsUrl({ ...options, source: "user" });
-    return this.fetchParsed(
+    return await this.fetchParsed(
       url,
       this.scoresCache,
       (body) =>
@@ -197,7 +197,7 @@ export class McClient {
 
   async getWatchOffers(imdbId: string, kind: Kind): Promise<Outcome<WatchOffer[]>> {
     const url = watchUrl(imdbId, kind);
-    return this.fetchParsed(url, this.scoresCache, (body) =>
+    return await this.fetchParsed(url, this.scoresCache, (body) =>
       parseOffers(body, url, `streaming offers for ${imdbId}`),
     );
   }

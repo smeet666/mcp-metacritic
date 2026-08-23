@@ -77,7 +77,9 @@ export async function runSearchTitles(
     const windowExhausted = args.kind !== "any" && matching.length === results.length;
 
     const notes: string[] = [];
-    if (cached) notes.push("Served from this server's short-lived in-memory cache.");
+    if (cached) {
+      notes.push("Served from this server's short-lived in-memory cache.");
+    }
 
     // A query of several words is counted loosely upstream: "the matrix" reports
     // over 55 000 entries because it counts anything matching either word. Saying

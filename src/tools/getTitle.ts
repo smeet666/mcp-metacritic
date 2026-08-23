@@ -1,4 +1,80 @@
 /**
+ * Where the description stopped, and what a section left out means for the null
+ * it leaves behind.
+ *
+ * The audience score only exists on the scores route, so without that section
+ * its absence here says nothing about the title. Saying so beats a bare null a
+ * caller would read as "Metacritic publishes none".
+ */
+function notesOnWhatWasReadAndAsked(read: {
+  basic: boolean;
+  wanted: Set<Section>;
+  slice: string;
+  nextOffset: number | null;
+  fullLength: number;
+  offset: number;
+  maxChars: number;
+}): string[] {
+  const { basic, wanted, slice, nextOffset, fullLength, offset, maxChars } = read;
+  const notes: string[] = [];
+
+  if (basic && nextOffset !== null) {
+    notes.push(
+      `The description is longer than ${maxChars} characters. Call again with offset=${nextOffset} for the rest.`,
+    );
+  }
+  if (basic && slice === "" && offset > 0 && fullLength > 0) {
+    notes.push(
+      `offset=${offset} is past the end of a description of ${fullLength} characters. Call again with offset=0 to read it from the start.`,
+    );
+  }
+  if (!wanted.has("scores")) {
+    notes.push(
+      "Scores were not requested, so critic_score and user_score are null here regardless of what Metacritic publishes. Add 'scores' to sections to read them.",
+    );
+  }
+
+  return notes;
+}
+
+/** How many companies a production credit shows before it stops. */
+const PRODUCTION_CAP = 25;
+
+/**
+ * Put the sections a caller asked for into the payload, and say what was cut.
+ *
+ * A section left out carries no key at all rather than an empty one: an empty
+ * list is a statement that Metacritic holds none, and only a section that was
+ * asked for can make it.
+ */
+function attachAskedSections(
+  structured: Record<string, unknown>,
+  item: TitleDetail,
+  wanted: Set<Section>,
+  notes: string[],
+): Array<{ name: string }> {
+  if (wanted.has("awards")) {
+    structured.awards = item.awards;
+  }
+  if (wanted.has("networks")) {
+    structured.networks = item.networks;
+  }
+
+  if (!wanted.has("production")) {
+    return [];
+  }
+
+  const production = item.production.slice(0, PRODUCTION_CAP);
+  structured.production = production;
+  if (item.production.length > PRODUCTION_CAP) {
+    notes.push(
+      `${item.production.length} companies are credited and the first ${PRODUCTION_CAP} are shown. The list mixes producers with distributors and home-video labels across every territory.`,
+    );
+  }
+  return production;
+}
+
+/**
  * get_title: read one entry, section by section.
  *
  * The detail response runs to 46 KB for a film, so sections are opt-in and the
@@ -105,7 +181,9 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
     const notes: string[] = [];
 
     const detail = await client.getDetail(args.kind, args.slug);
-    if (detail.cached) notes.push("Served from this server's short-lived in-memory cache.");
+    if (detail.cached) {
+      notes.push("Served from this server's short-lived in-memory cache.");
+    }
     const item = detail.data;
 
     let criticScore: ScoreSummary | null = null;
@@ -120,25 +198,17 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
     const basic = wanted.has("basic");
     const full = basic ? (item.description ?? "") : "";
     const { slice, nextOffset } = sliceAtLineBoundary(full, args.offset, args.max_chars);
-    if (basic && nextOffset !== null) {
-      notes.push(
-        `The description is longer than ${args.max_chars} characters. Call again with offset=${nextOffset} for the rest.`,
-      );
-    }
-    if (basic && slice === "" && args.offset > 0 && full.length > 0) {
-      notes.push(
-        `offset=${args.offset} is past the end of a description of ${full.length} characters. Call again with offset=0 to read it from the start.`,
-      );
-    }
-
-    // The audience score only exists on the scores route, so without that
-    // section its absence here says nothing about the title. Saying so beats a
-    // bare null the caller would read as "Metacritic publishes none".
-    if (!wanted.has("scores")) {
-      notes.push(
-        "Scores were not requested, so critic_score and user_score are null here regardless of what Metacritic publishes. Add 'scores' to sections to read them.",
-      );
-    }
+    notes.push(
+      ...notesOnWhatWasReadAndAsked({
+        basic,
+        wanted,
+        slice,
+        nextOffset,
+        fullLength: full.length,
+        offset: args.offset,
+        maxChars: args.max_chars,
+      }),
+    );
 
     const structured: Record<string, unknown> = {
       title: {
@@ -161,24 +231,13 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
       notes,
     };
 
-    if (wanted.has("awards")) structured.awards = item.awards;
-
-    const PRODUCTION_CAP = 25;
-    const production = wanted.has("production") ? item.production.slice(0, PRODUCTION_CAP) : [];
-    if (wanted.has("production")) {
-      structured.production = production;
-      if (item.production.length > PRODUCTION_CAP) {
-        notes.push(
-          `${item.production.length} companies are credited and the first ${PRODUCTION_CAP} are shown. The list mixes producers with distributors and home-video labels across every territory.`,
-        );
-      }
-    }
-
-    if (wanted.has("networks")) structured.networks = item.networks;
+    const production = attachAskedSections(structured, item, wanted, notes);
     const offers = wanted.has("where_to_watch")
       ? await watchOffers(client, item, args.kind, notes)
       : [];
-    if (wanted.has("where_to_watch")) structured.where_to_watch = offers;
+    if (wanted.has("where_to_watch")) {
+      structured.where_to_watch = offers;
+    }
 
     return ok(structured, render(item, slice, criticScore, userScore, wanted, offers, production), {
       notes,
@@ -251,6 +310,67 @@ async function watchOffers(
  * the structured payload, and omitting the streaming offers hides a section the
  * caller paid a request for.
  */
+/** The ceremonies a title was named at, with what it took away from each. */
+function renderAwards(item: TitleDetail, wanted: Set<Section>): string[] {
+  if (!wanted.has("awards") || item.awards.length === 0) {
+    return [];
+  }
+
+  return [
+    "",
+    "Awards:",
+    ...item.awards.map((a) => {
+      const tally = [
+        a.wins === null ? "" : `${a.wins} win${a.wins === 1 ? "" : "s"}`,
+        a.nominations === null
+          ? ""
+          : `${a.nominations} nomination${a.nominations === 1 ? "" : "s"}`,
+      ].filter(Boolean);
+      return `  ${a.ceremony}${tally.length > 0 ? `: ${tally.join(", ")}` : ""}`;
+    }),
+  ];
+}
+
+/**
+ * The sections a caller asked for, each printed rather than announced.
+ *
+ * A section a caller asked for and that holds nothing says so: "no company
+ * credited" and a missing line are different answers, and only the first one
+ * tells a reader that the question was put.
+ */
+function renderAskedSections(
+  item: TitleDetail,
+  wanted: Set<Section>,
+  offers: WatchOffer[],
+  production: Array<{ name: string }>,
+): string[] {
+  const lines: string[] = [];
+
+  lines.push(...renderAwards(item, wanted));
+
+  if (wanted.has("networks") && item.networks.length > 0) {
+    lines.push("", `Networks: ${item.networks.join(", ")}`);
+  }
+
+  if (wanted.has("production")) {
+    lines.push(
+      "",
+      production.length === 0
+        ? "Production: no company credited."
+        : `Production: ${production.map((company) => company.name).join(", ")}`,
+    );
+  }
+
+  if (wanted.has("where_to_watch")) {
+    lines.push("", offers.length === 0 ? "Where to watch: nothing listed." : "Where to watch:");
+    for (const o of offers) {
+      lines.push(`  ${o.provider} (${o.kind})${o.url ? ` — ${o.url}` : ""}`);
+    }
+  }
+
+  return lines;
+}
+
 function render(
   item: TitleDetail,
   description: string,
@@ -268,8 +388,12 @@ function render(
 
   const lines = [header];
   if (wanted.has("basic")) {
-    if (item.genres.length > 0) lines.push(`Genres: ${item.genres.join(", ")}`);
-    if (item.duration !== null) lines.push(`Runtime: ${item.duration} min`);
+    if (item.genres.length > 0) {
+      lines.push(`Genres: ${item.genres.join(", ")}`);
+    }
+    if (item.duration !== null) {
+      lines.push(`Runtime: ${item.duration} min`);
+    }
   }
   if (critic?.score !== null && critic !== null) {
     lines.push(
@@ -281,38 +405,11 @@ function render(
       `Users: ${user.score}/${user.max} from ${user.reviewCount ?? "?"} ratings${user.sentiment ? ` (${user.sentiment})` : ""}`,
     );
   }
-  if (description) lines.push("", description);
-
-  if (wanted.has("awards") && item.awards.length > 0) {
-    lines.push("", "Awards:");
-    for (const a of item.awards) {
-      const tally = [
-        a.wins === null ? "" : `${a.wins} win${a.wins === 1 ? "" : "s"}`,
-        a.nominations === null
-          ? ""
-          : `${a.nominations} nomination${a.nominations === 1 ? "" : "s"}`,
-      ].filter(Boolean);
-      lines.push(`  ${a.ceremony}${tally.length > 0 ? `: ${tally.join(", ")}` : ""}`);
-    }
+  if (description) {
+    lines.push("", description);
   }
 
-  if (wanted.has("networks") && item.networks.length > 0) {
-    lines.push("", `Networks: ${item.networks.join(", ")}`);
-  }
-
-  if (wanted.has("production")) {
-    lines.push(
-      "",
-      production.length === 0
-        ? "Production: no company credited."
-        : `Production: ${production.map((company) => company.name).join(", ")}`,
-    );
-  }
-
-  if (wanted.has("where_to_watch")) {
-    lines.push("", offers.length === 0 ? "Where to watch: nothing listed." : "Where to watch:");
-    for (const o of offers) lines.push(`  ${o.provider} (${o.kind})${o.url ? ` — ${o.url}` : ""}`);
-  }
+  lines.push(...renderAskedSections(item, wanted, offers, production));
 
   return lines.join("\n");
 }

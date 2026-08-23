@@ -60,7 +60,9 @@ interface NumericRange {
 
 function readNumber(name: string, env: NodeJS.ProcessEnv, range: NumericRange): number {
   const raw = env[name];
-  if (raw === undefined || raw.trim() === "") return range.fallback;
+  if (raw === undefined || raw.trim() === "") {
+    return range.fallback;
+  }
 
   const parsed = Number(raw);
   if (!Number.isFinite(parsed)) {
@@ -96,7 +98,9 @@ function warn(message: string): void {
  */
 function readInterval(env: NodeJS.ProcessEnv): number {
   const raw = env.MC_MIN_INTERVAL_MS;
-  if (raw === undefined || raw.trim() === "") return DEFAULTS.minIntervalMs;
+  if (raw === undefined || raw.trim() === "") {
+    return DEFAULTS.minIntervalMs;
+  }
 
   const parsed = Number(raw);
   if (!Number.isFinite(parsed)) {
@@ -109,7 +113,7 @@ function readInterval(env: NodeJS.ProcessEnv): number {
     warn(
       `MC_MIN_INTERVAL_MS=${raw} is below the ${MIN_ALLOWED_INTERVAL_MS}ms floor and was ignored; ` +
         `using ${DEFAULTS.minIntervalMs}ms. Metacritic publishes no rate limit, so this client ` +
-        `sets its own.`,
+        "sets its own.",
     );
     return DEFAULTS.minIntervalMs;
   }

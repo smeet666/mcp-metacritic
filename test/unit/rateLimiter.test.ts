@@ -173,7 +173,9 @@ describe("backing off and recovering", () => {
     instance.penalize();
     const penalised = instance.currentIntervalMs;
 
-    for (let i = 0; i < 20; i += 1) instance.relax();
+    for (let i = 0; i < 20; i += 1) {
+      instance.relax();
+    }
 
     expect(instance.currentIntervalMs).toBeLessThan(penalised);
     expect(instance.currentIntervalMs).toBeGreaterThanOrEqual(700);

@@ -79,13 +79,17 @@ export class RateLimiter {
   }
 
   private async waitForSlot(): Promise<void> {
-    if (this.intervalMs === 0 || this.lastStart === 0) return;
+    if (this.intervalMs === 0 || this.lastStart === 0) {
+      return;
+    }
     const elapsed = Date.now() - this.lastStart;
     // Clamped to the interval: a clock stepped backwards, by NTP or a resumed
     // VM, would otherwise make this wait for the size of the step, and the
     // queue is serial so every pending request would wait behind it.
     const remaining = Math.min(this.intervalMs, this.intervalMs - elapsed);
-    if (remaining > 0) await sleep(remaining);
+    if (remaining > 0) {
+      await sleep(remaining);
+    }
   }
 }
 
