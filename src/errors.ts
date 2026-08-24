@@ -23,6 +23,8 @@ export interface ErrorDetails {
   status?: number;
   retryAfterMs?: number;
   hint?: string;
+  /** What was raised underneath, kept for the bug report the hint asks for. */
+  cause?: unknown;
 }
 
 export class McError extends Error {
@@ -31,7 +33,7 @@ export class McError extends Error {
     message: string,
     readonly details: ErrorDetails = {},
   ) {
-    super(message);
+    super(message, details.cause === undefined ? undefined : { cause: details.cause });
     this.name = "McError";
   }
 }
@@ -71,11 +73,11 @@ export function rateLimited(url: string, retryAfterMs: number): McError {
  * without notice. Failing here is what turns such a change into a report rather
  * than into answers that look empty.
  */
-export function parseFailure(url: string, what: string): McError {
+export function parseFailure(url: string, what: string, cause?: unknown): McError {
   return new McError(
     "parse_failure",
     `Metacritic answered, but the response did not have the expected shape (${what}).`,
-    { url, hint: `Please report this, with the request you made, at ${ISSUES_URL}` },
+    { url, hint: `Please report this, with the request you made, at ${ISSUES_URL}`, cause },
   );
 }
 

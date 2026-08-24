@@ -44,8 +44,8 @@ export function envelope(raw: string, url: string, what: string): Json {
   let body: unknown;
   try {
     body = JSON.parse(raw);
-  } catch {
-    throw parseFailure(url, "the body is not valid JSON");
+  } catch (cause) {
+    throw parseFailure(url, "the body is not valid JSON", cause);
   }
 
   if (!isObject(body)) {

@@ -668,18 +668,20 @@ describe("every score that reaches a model", () => {
       client.callTool({ name: "browse_titles", arguments: { kind: "movie", sort: "score" } }),
     ]);
 
-    let checked = 0;
+    // Collected rather than counted: a closure written in a loop must not
+    // carry a binding the loop reassigns.
+    const checked: unknown[] = [];
     for (const result of results as any[]) {
       walk(result.structuredContent, (node) => {
         if ("score" in node && node.score !== null && node.score !== undefined) {
           expect(typeof node.max, `a score of ${node.score} with no max`).toBe("number");
           expect(node.max, `a score of ${node.score} on a zero scale`).toBeGreaterThan(0);
-          checked += 1;
+          checked.push(node.score);
         }
       });
     }
 
-    expect(checked, "no score was found to check").toBeGreaterThan(0);
+    expect(checked.length, "no score was found to check").toBeGreaterThan(0);
   });
 
   it("keeps the row scores under the names that say which scale they are on", async () => {

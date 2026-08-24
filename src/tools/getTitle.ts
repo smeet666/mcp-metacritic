@@ -1,4 +1,29 @@
 /**
+ * get_title: read one entry, section by section.
+ *
+ * The detail response runs to 46 KB for a film, so sections are opt-in and the
+ * default pair answers the question people actually ask: what is this, and is
+ * it any good.
+ */
+
+import { z } from "zod";
+import type { McClient } from "../mc/client.js";
+import { McError } from "../errors.js";
+import type { Kind, ScoreSummary, TitleDetail, WatchOffer } from "../types.js";
+import { strictInput } from "./arguments.js";
+import {
+  kindSchema,
+  ok,
+  scoreSchema,
+  sliceAtLineBoundary,
+  titleSummarySchema,
+  toScoreOut,
+  toTitleSummaryOut,
+  toToolError,
+  type ToolResult,
+} from "./shared.js";
+
+/**
  * Where the description stopped, and what a section left out means for the null
  * it leaves behind.
  *
@@ -73,31 +98,6 @@ function attachAskedSections(
   }
   return production;
 }
-
-/**
- * get_title: read one entry, section by section.
- *
- * The detail response runs to 46 KB for a film, so sections are opt-in and the
- * default pair answers the question people actually ask: what is this, and is
- * it any good.
- */
-
-import { z } from "zod";
-import type { McClient } from "../mc/client.js";
-import { McError } from "../errors.js";
-import type { Kind, ScoreSummary, TitleDetail, WatchOffer } from "../types.js";
-import { strictInput } from "./arguments.js";
-import {
-  kindSchema,
-  ok,
-  scoreSchema,
-  sliceAtLineBoundary,
-  titleSummarySchema,
-  toScoreOut,
-  toTitleSummaryOut,
-  toToolError,
-  type ToolResult,
-} from "./shared.js";
 
 const SECTIONS = ["basic", "scores", "awards", "production", "networks", "where_to_watch"] as const;
 type Section = (typeof SECTIONS)[number];

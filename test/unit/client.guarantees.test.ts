@@ -8,7 +8,7 @@
  * so they have to hold on that path too.
  */
 
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_USER_AGENT, MIN_ALLOWED_INTERVAL_MS } from "../../src/config.js";
 import { McClient } from "../../src/mc/client.js";
 import { happyRouter, silentLogger, testConfig } from "./_helpers.js";
@@ -18,6 +18,14 @@ const CHROME =
 
 const userAgentOf = (fetch: ReturnType<typeof happyRouter>, index = 0): string =>
   new Headers(fetch.calls[index]!.init?.headers as Record<string, string>).get("user-agent") ?? "";
+
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("the User-Agent this client sends", () => {
   it("identifies the project by default", async () => {
@@ -82,15 +90,19 @@ describe("the pacing floor", () => {
       fetchImpl: fetch.impl,
     });
 
-    await client.search("blue horizon", 10, 0);
-    await client.search("cinder vale", 10, 0);
+    const both = Promise.all([
+      client.search("blue horizon", 10, 0),
+      client.search("cinder vale", 10, 0),
+    ]);
+    await vi.advanceTimersByTimeAsync(MIN_ALLOWED_INTERVAL_MS * 4);
+    await both;
 
     expect(fetch.calls).toHaveLength(2);
     expect(
       fetch.calls[1]!.at - fetch.calls[0]!.at,
       "a caller asking for no pacing at all still gets the floor",
-    ).toBeGreaterThanOrEqual(MIN_ALLOWED_INTERVAL_MS - 20);
-  }, 20_000);
+    ).toBeGreaterThanOrEqual(MIN_ALLOWED_INTERVAL_MS);
+  });
 
   it("leaves a caller who asks to go slower alone", async () => {
     const fetch = happyRouter();
@@ -100,11 +112,15 @@ describe("the pacing floor", () => {
       fetchImpl: fetch.impl,
     });
 
-    await client.search("blue horizon", 10, 0);
-    await client.search("cinder vale", 10, 0);
+    const both = Promise.all([
+      client.search("blue horizon", 10, 0),
+      client.search("cinder vale", 10, 0),
+    ]);
+    await vi.advanceTimersByTimeAsync(MIN_ALLOWED_INTERVAL_MS * 8);
+    await both;
 
     expect(fetch.calls[1]!.at - fetch.calls[0]!.at).toBeGreaterThanOrEqual(
-      MIN_ALLOWED_INTERVAL_MS * 2 - 20,
+      MIN_ALLOWED_INTERVAL_MS * 2,
     );
-  }, 20_000);
+  });
 });

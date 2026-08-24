@@ -7,7 +7,7 @@
  * model told the wrong one will state the wrong thing with confidence.
  */
 
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { backoffDelay, fetchText } from "../../src/mc/http.js";
 import { RateLimiter } from "../../src/mc/rateLimiter.js";
 import {
@@ -92,9 +92,19 @@ describe("failures that are worth retrying", () => {
     expect(fetch.calls).toHaveLength(1);
   });
 
-  it(
-    "paces every attempt of a retry chain, retries included",
-    async () => {
+  describe("the gap between attempts", () => {
+    // The only assertion here that measures rather than waits. The clock is
+    // pinned and moved by hand, so the gap is what the limiter asked for rather
+    // than what the machine happened to take.
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("paces every attempt of a retry chain, retries included", async () => {
       const body = fixtureText("search.json");
       const fetch = sequenceFetch([
         { status: 500, body: "boom" },
@@ -102,14 +112,15 @@ describe("failures that are worth retrying", () => {
         { status: 200, body },
       ]);
 
-      await call(fetch.impl, { maxRetries: 2, minIntervalMs: 40 });
+      const answered = call(fetch.impl, { maxRetries: 2, minIntervalMs: 40 });
+      await vi.advanceTimersByTimeAsync(60_000);
+      await answered;
 
       expect(fetch.calls).toHaveLength(3);
-      expect(fetch.calls[1]!.at - fetch.calls[0]!.at).toBeGreaterThanOrEqual(32);
-      expect(fetch.calls[2]!.at - fetch.calls[1]!.at).toBeGreaterThanOrEqual(32);
-    },
-    RETRY_TIMEOUT,
-  );
+      expect(fetch.calls[1]!.at - fetch.calls[0]!.at).toBeGreaterThanOrEqual(40);
+      expect(fetch.calls[2]!.at - fetch.calls[1]!.at).toBeGreaterThanOrEqual(40);
+    });
+  });
 
   it("backs off further with each attempt", () => {
     expect(backoffDelay(0)).toBeGreaterThan(0);

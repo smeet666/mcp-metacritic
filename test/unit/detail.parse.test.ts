@@ -161,7 +161,11 @@ describe("watch offers", () => {
   it("labels each offer with the group it came from", async () => {
     const { data } = await client(happyRouter().impl).getWatchOffers("tt0910111", "movie");
 
-    expect(data.map((offer) => offer.kind).sort()).toEqual(["buy", "rent", "rent"]);
+    expect(data.map((offer) => offer.kind).sort((a, b) => a.localeCompare(b))).toEqual([
+      "buy",
+      "rent",
+      "rent",
+    ]);
     expect(data.map((offer) => offer.provider)).toContain("Lantern Video");
     expect(data.map((offer) => offer.provider)).toContain("Coastline Store");
   });
