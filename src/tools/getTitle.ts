@@ -239,10 +239,19 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
       structured.where_to_watch = offers;
     }
 
-    return ok(structured, render(item, slice, criticScore, userScore, wanted, offers, production), {
-      notes,
-      sourceUrl: item.sourceUrl,
-    });
+    return ok(
+      structured,
+      render(item, slice, wanted, {
+        critic: criticScore,
+        user: userScore,
+        offers,
+        production,
+      }),
+      {
+        notes,
+        sourceUrl: item.sourceUrl,
+      },
+    );
   } catch (error) {
     return toToolError(error);
   }
@@ -374,12 +383,15 @@ function renderAskedSections(
 function render(
   item: TitleDetail,
   description: string,
-  critic: ScoreSummary | null,
-  user: ScoreSummary | null,
   wanted: Set<Section>,
-  offers: WatchOffer[],
-  production: Array<{ name: string }>,
+  said: {
+    critic: ScoreSummary | null;
+    user: ScoreSummary | null;
+    offers: WatchOffer[];
+    production: Array<{ name: string }>;
+  },
 ): string {
+  const { critic, user, offers, production } = said;
   // Some titles already carry their year, so it is only appended when absent.
   const yearShown = item.year !== null && !item.title.includes(`(${item.year})`);
   const header = [item.title, yearShown ? `(${item.year})` : "", `· ${item.kind}`]
