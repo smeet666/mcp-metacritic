@@ -55,9 +55,9 @@ export function cachingConfig(over: Partial<Config> = {}): Config {
 }
 
 export const silentLogger = {
-  error: () => {},
-  info: () => {},
-  debug: () => {},
+  error: () => undefined,
+  info: () => undefined,
+  debug: () => undefined,
 };
 
 export interface FetchCall {
@@ -91,11 +91,10 @@ export function makeFetch(
   const impl = (async (input: any, init?: RequestInit) => {
     const url = typeof input === "string" ? input : String(input?.url ?? input);
     const index = calls.length;
-    // The moment is read from the monotonic clock rather than the wall clock:
-    // a wall clock can be stepped backwards by a time sync, and a gap measured
-    // across that step comes out negative and fails a pacing test that never
-    // had anything wrong with it.
-    calls.push({ url, init, at: performance.now() });
+    // The suites that compare these moments pin the clock and move it by hand,
+    // and `setSystemTime` drives Date rather than `performance`, so the exact
+    // moment is the one Date reports.
+    calls.push({ url, init, at: Date.now() });
 
     const raw = responder(url, index);
     const scripted: ScriptedResponse = typeof raw === "string" ? { body: raw } : raw;
@@ -181,8 +180,8 @@ export async function expectMcError(
   try {
     await run();
     resolved = true;
-  } catch (error) {
-    caught = error;
+  } catch (raised) {
+    caught = raised;
   }
 
   expect(resolved, `expected an McError with code "${code}", but the call resolved`).toBe(false);

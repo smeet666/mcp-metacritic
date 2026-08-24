@@ -7,13 +7,24 @@
  * them keeps draining when one of them fails.
  */
 
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RateLimiter } from "../../src/mc/rateLimiter.js";
 
 const INTERVAL = 60;
 
-/** Timers fire on a best-effort basis, so measured gaps get a small tolerance. */
-const SLACK = 8;
+/**
+ * The clock is pinned and moved by hand, so a gap is what the limiter asked for
+ * rather than what the machine happened to take. Measured against the real
+ * clock, a pacing test fails whenever the machine stalls, which says nothing
+ * about the pacing.
+ */
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 const limiter = (minIntervalMs = INTERVAL) => new RateLimiter({ minIntervalMs });
 
@@ -27,7 +38,7 @@ describe("scheduling", () => {
 
     await limiter(1000).beforeRequest();
 
-    expect(Date.now() - started).toBeLessThan(1000);
+    expect(Date.now() - started).toBe(0);
   });
 
   it("spaces consecutive requests by at least the configured interval", async () => {
@@ -38,37 +49,41 @@ describe("scheduling", () => {
       startedAt.push(Date.now());
     };
 
-    await Promise.all([
+    const all = Promise.all([
       instance.schedule(record),
       instance.schedule(record),
       instance.schedule(record),
     ]);
+    await vi.advanceTimersByTimeAsync(INTERVAL * 5);
+    await all;
 
     expect(startedAt).toHaveLength(3);
-    expect(startedAt[1]! - startedAt[0]!).toBeGreaterThanOrEqual(INTERVAL - SLACK);
-    expect(startedAt[2]! - startedAt[1]!).toBeGreaterThanOrEqual(INTERVAL - SLACK);
+    expect(startedAt[1]! - startedAt[0]!).toBeGreaterThanOrEqual(INTERVAL);
+    expect(startedAt[2]! - startedAt[1]!).toBeGreaterThanOrEqual(INTERVAL);
   });
 
   it("spaces the attempts inside one task, so a retry chain is paced like anything else", async () => {
     const instance = limiter();
     const attemptedAt: number[] = [];
 
-    await instance.schedule(async () => {
+    const run = instance.schedule(async () => {
       for (let attempt = 0; attempt < 3; attempt += 1) {
         await instance.beforeRequest();
         attemptedAt.push(Date.now());
       }
     });
+    await vi.advanceTimersByTimeAsync(INTERVAL * 5);
+    await run;
 
-    expect(attemptedAt[1]! - attemptedAt[0]!).toBeGreaterThanOrEqual(INTERVAL - SLACK);
-    expect(attemptedAt[2]! - attemptedAt[1]!).toBeGreaterThanOrEqual(INTERVAL - SLACK);
+    expect(attemptedAt[1]! - attemptedAt[0]!).toBeGreaterThanOrEqual(INTERVAL);
+    expect(attemptedAt[2]! - attemptedAt[1]!).toBeGreaterThanOrEqual(INTERVAL);
   });
 
   it("runs queued tasks one at a time, in the order they were scheduled", async () => {
     const instance = limiter(1);
     const events: string[] = [];
 
-    await Promise.all(
+    const all = Promise.all(
       ["a", "b", "c"].map((name) =>
         instance.schedule(async () => {
           events.push(`start ${name}`);
@@ -77,6 +92,8 @@ describe("scheduling", () => {
         }),
       ),
     );
+    await vi.advanceTimersByTimeAsync(100);
+    await all;
 
     expect(events).toEqual(["start a", "end a", "start b", "end b", "start c", "end c"]);
   });
@@ -138,9 +155,11 @@ describe("scheduling", () => {
       startedAt.push(Date.now());
     });
 
-    await Promise.allSettled([failing, following]);
+    const settled = Promise.allSettled([failing, following]);
+    await vi.advanceTimersByTimeAsync(INTERVAL * 5);
+    await settled;
 
-    expect(startedAt[1]! - startedAt[0]!).toBeGreaterThanOrEqual(INTERVAL - SLACK);
+    expect(startedAt[1]! - startedAt[0]!).toBeGreaterThanOrEqual(INTERVAL);
   });
 });
 
@@ -192,9 +211,11 @@ describe("backing off and recovering", () => {
       startedAt.push(Date.now());
     };
 
-    await Promise.all([instance.schedule(record), instance.schedule(record)]);
+    const all = Promise.all([instance.schedule(record), instance.schedule(record)]);
+    await vi.advanceTimersByTimeAsync(widened * 3);
+    await all;
 
     expect(widened).toBeGreaterThan(20);
-    expect(startedAt[1]! - startedAt[0]!).toBeGreaterThanOrEqual(widened - SLACK);
+    expect(startedAt[1]! - startedAt[0]!).toBeGreaterThanOrEqual(widened);
   });
 });
