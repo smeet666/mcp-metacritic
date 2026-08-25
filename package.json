@@ -4,7 +4,10 @@
   "description": "MCP server for Metacritic. Search films, shows and games, read Metascores and critic reviews with attribution. No API key required.",
   "type": "module",
   "license": "MIT",
-  "author": "smeet666",
+  "author": {
+    "name": "Damien Bouissou",
+    "url": "https://github.com/smeet666"
+  },
   "homepage": "https://github.com/smeet666/mcp-metacritic#readme",
   "repository": {
     "type": "git",
