@@ -163,7 +163,7 @@ describe("push-back from the host", () => {
       const fetch = constantFetch({
         status: 503,
         body: "come back later",
-        headers: { "retry-after": new Date(Date.now() + 8_000).toUTCString() },
+        headers: { "retry-after": new Date(Date.now() + 8000).toUTCString() },
       });
 
       const error = await expectMcError(() => call(fetch.impl, { maxRetries: 0 }), "rate_limited");

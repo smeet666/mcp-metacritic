@@ -23,7 +23,7 @@ const listing = (score: number | null) =>
       itemsPerPage: 10,
       items: [
         {
-          id: 2000562074,
+          id: 2_000_562_074,
           type: "movie",
           typeId: 2,
           title: "Angel's Egg",
@@ -68,7 +68,7 @@ describe("an unreleased entry nobody has rated yet", () => {
     JSON.stringify({
       data: {
         item: {
-          id: 2000600001,
+          id: 2_000_600_001,
           type: "movie",
           typeId: 2,
           title: "Bluey: The Movie",

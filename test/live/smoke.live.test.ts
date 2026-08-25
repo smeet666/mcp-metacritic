@@ -13,6 +13,7 @@
  * sending X" rather than "something is wrong".
  */
 
+import process from "node:process";
 import { describe, expect, it } from "vitest";
 import { McClient } from "../../src/mc/client.js";
 import { McError } from "../../src/errors.js";

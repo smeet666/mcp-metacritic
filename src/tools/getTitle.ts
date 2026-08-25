@@ -122,7 +122,7 @@ export const getTitleInput = strictInput({
     .number()
     .int()
     .min(200)
-    .max(20000)
+    .max(20_000)
     .default(4000)
     .describe("Character budget for the description."),
   offset: z.number().int().min(0).default(0).describe("Where to resume the description."),

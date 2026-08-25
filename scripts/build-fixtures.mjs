@@ -20,6 +20,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import process from "node:process";
 
 const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "test", "fixtures");
 
@@ -44,7 +45,7 @@ const images = (slug) => [
 ];
 
 const searchRow = (over) => ({
-  id: 2000100000,
+  id: 2_000_100_000,
   type: "movie",
   typeId: 2,
   title: "Untitled",
@@ -74,7 +75,7 @@ const SEARCH = {
     links: { self: { href: "/finder/metacritic/search/lantern/web" } },
     items: [
       searchRow({
-        id: 2000100001,
+        id: 2_000_100_001,
         type: "movie",
         typeId: 2,
         title: "Blue Horizon",
@@ -93,7 +94,7 @@ const SEARCH = {
         images: images("blue-horizon"),
       }),
       searchRow({
-        id: 2000100002,
+        id: 2_000_100_002,
         type: "show",
         typeId: 1,
         title: "Paper Lanterns",
@@ -108,7 +109,7 @@ const SEARCH = {
         images: images("paper-lanterns"),
       }),
       searchRow({
-        id: 2000100003,
+        id: 2_000_100_003,
         type: "game-title",
         typeId: 13,
         title: "Cinder Vale",
@@ -127,7 +128,7 @@ const SEARCH = {
         images: images("cinder-vale"),
       }),
       searchRow({
-        id: 2000100004,
+        id: 2_000_100_004,
         type: "movie",
         typeId: 2,
         title: "The Salt Road",
@@ -157,7 +158,7 @@ const BROWSE = {
     itemsPerPage: 24,
     items: [
       browseRow({
-        id: 2000100001,
+        id: 2_000_100_001,
         type: "movie",
         typeId: 2,
         title: "Blue Horizon",
@@ -172,7 +173,7 @@ const BROWSE = {
         images: images("blue-horizon"),
       }),
       browseRow({
-        id: 2000100005,
+        id: 2_000_100_005,
         type: "movie",
         typeId: 2,
         title: "Vermilion Hours",
@@ -187,7 +188,7 @@ const BROWSE = {
         images: images("vermilion-hours"),
       }),
       browseRow({
-        id: 2000100006,
+        id: 2_000_100_006,
         type: "movie",
         typeId: 2,
         title: "Gravel Choir",
@@ -211,7 +212,7 @@ const BROWSE = {
 const DETAIL_MOVIE = {
   data: {
     item: {
-      id: 2000100001,
+      id: 2_000_100_001,
       title: "Blue Horizon",
       slug: "blue-horizon",
       premiereYear: 2011,
@@ -254,7 +255,7 @@ const DETAIL_MOVIE = {
 const DETAIL_GAME = {
   data: {
     item: {
-      id: 2000100003,
+      id: 2_000_100_003,
       title: "Cinder Vale",
       slug: "cinder-vale",
       premiereYear: 2023,
@@ -805,7 +806,7 @@ const PARTIAL_ROWS = {
     totalResults: 90,
     items: [
       searchRow({
-        id: 2000100001,
+        id: 2_000_100_001,
         type: "movie",
         title: "Blue Horizon",
         slug: "blue-horizon",
@@ -813,7 +814,7 @@ const PARTIAL_ROWS = {
       }),
       badRow("no id, type, title or slug"),
       searchRow({
-        id: 2000100003,
+        id: 2_000_100_003,
         type: "game-title",
         typeId: 13,
         title: "Cinder Vale",

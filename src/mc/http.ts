@@ -96,7 +96,7 @@ function readAnswer(
   // page, and it clears on its own. Retried for that reason, but reported as a
   // parse failure if it never does: a body that is persistently not JSON means
   // the shape moved, and that is worth a bug report.
-  if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+  if (!(trimmed.startsWith("{") || trimmed.startsWith("["))) {
     return {
       kind: "again",
       error: parseFailure(url, "the body is not JSON"),
