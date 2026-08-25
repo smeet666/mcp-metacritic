@@ -3,6 +3,7 @@
  * Entry point: an MCP server for Metacritic over stdio.
  */
 
+import process from "node:process";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createLogger, loadConfig } from "./config.js";
 import { createServer } from "./server.js";

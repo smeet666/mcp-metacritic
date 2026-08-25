@@ -373,7 +373,7 @@ export function parseCriticReviews(
     const publication = str(node.publicationName);
     // A quote with no publication cannot be attributed, and attribution is the
     // condition under which this content is worth passing on at all.
-    if (!quote || !publication) {
+    if (!(quote && publication)) {
       continue;
     }
     reviews.push({

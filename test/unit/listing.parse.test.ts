@@ -34,7 +34,7 @@ describe("search rows", () => {
     const { data } = await client(happyRouter().impl).search("lantern", 10, 0);
     const first = data.titles[0]!;
 
-    expect(first.id).toBe(2000100001);
+    expect(first.id).toBe(2_000_100_001);
     expect(first.slug).toBe("blue-horizon");
     expect(first.title).toBe("Blue Horizon");
     expect(first.year).toBe(2011);

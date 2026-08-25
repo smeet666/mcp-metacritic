@@ -33,7 +33,7 @@ describe("detail", () => {
   it("reads the identity fields a citation needs", async () => {
     const { data } = await client(happyRouter().impl).getDetail("movie", "blue-horizon");
 
-    expect(data.id).toBe(2000100001);
+    expect(data.id).toBe(2_000_100_001);
     expect(data.title).toBe("Blue Horizon");
     expect(data.slug).toBe("blue-horizon");
     expect(data.year).toBe(2011);
