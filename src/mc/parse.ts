@@ -28,6 +28,8 @@ import type {
 import { FIELD, SEARCH_TYPE } from "./paths.js";
 import { bucketFor, titlePageUrl } from "./urls.js";
 
+const ABSOLUTE_URL = /^https?:\/\//i;
+
 type Json = Record<string, unknown>;
 
 const isObject = (value: unknown): value is Json =>
@@ -443,7 +445,7 @@ function unwrapLink(link: string | null): string | null {
   }
   try {
     const target = new URL(link).searchParams.get("r");
-    if (target && /^https?:\/\//i.test(target)) {
+    if (target && ABSOLUTE_URL.test(target)) {
       return target;
     }
   } catch {

@@ -18,6 +18,10 @@ import {
   SORT_BY,
 } from "./paths.js";
 
+/** The shape of the slug the site puts in a path. */
+const SLUG = /^[a-z0-9][a-z0-9-]*$/i;
+const IMDB_ID = /^tt\d+$/;
+
 type Params = Record<string, string | number | undefined>;
 
 function build(path: string, params: Params): string {
@@ -40,7 +44,7 @@ function checkSlug(slug: string): string {
   if (trimmed === "") {
     throw invalidInput("The slug is empty.", "Take it from a search_titles result.");
   }
-  if (!/^[a-z0-9][a-z0-9-]*$/i.test(trimmed)) {
+  if (!SLUG.test(trimmed)) {
     throw invalidInput(
       `"${slug}" does not look like a Metacritic slug.`,
       "Slugs are lowercase words joined by hyphens, such as the-matrix. Use search_titles to get one.",
@@ -108,7 +112,7 @@ export function reviewsUrl(options: {
 /** Streaming offers, keyed by IMDb id rather than by Metacritic slug. */
 export function watchUrl(imdbId: string, kind: Kind): string {
   const trimmed = imdbId.trim();
-  if (!/^tt\d+$/.test(trimmed)) {
+  if (!IMDB_ID.test(trimmed)) {
     throw invalidInput(
       `"${imdbId}" is not an IMDb id.`,
       "IMDb ids look like tt0133093. get_title returns one as imdb_id.",

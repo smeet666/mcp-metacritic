@@ -37,6 +37,9 @@ import type { SORT_BY } from "./paths.js";
 import { RateLimiter } from "./rateLimiter.js";
 import { browseUrl, detailUrl, reviewsUrl, scoreUrl, searchUrl, watchUrl } from "./urls.js";
 
+/** The names a User-Agent carries when it passes traffic off as a browser. */
+const BROWSER_IDENTITY = /mozilla\/|applewebkit|chrome\/|safari\/|gecko/i;
+
 export interface McClientOptions {
   config?: Config;
   logger?: Logger;
@@ -65,7 +68,7 @@ export type Sort = keyof typeof SORT_BY;
  * thing, and gets the project's own identity appended so it stays attributable.
  */
 function withGuarantees(config: Config): Config {
-  const userAgent = /mozilla\/|applewebkit|chrome\/|safari\/|gecko/i.test(config.userAgent)
+  const userAgent = BROWSER_IDENTITY.test(config.userAgent)
     ? `${config.userAgent} ${DEFAULT_USER_AGENT}`
     : config.userAgent;
   return {

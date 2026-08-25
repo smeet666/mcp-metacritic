@@ -19,6 +19,8 @@ import {
   type ToolResult,
 } from "./shared.js";
 
+const WHITESPACE = /\s/;
+
 export const searchTitlesDescription = [
   "Search Metacritic for films, shows and games by title.",
   "Returns one compact row per match, carrying the critic Metascore, so a question about the critical verdict needs no second call.",
@@ -85,7 +87,7 @@ export async function runSearchTitles(
     // over 55 000 entries because it counts anything matching either word. Saying
     // "narrow the query" on the back of that number would be advice built on a
     // count that does not mean what it appears to mean.
-    const looseCount = /\s/.test(args.query.trim());
+    const looseCount = WHITESPACE.test(args.query.trim());
     if (looseCount) {
       notes.push(
         "Metacritic counts a multi-word query loosely, so total_available is far larger than the number of real matches. The rows themselves are ordered by relevance.",
