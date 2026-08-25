@@ -4,7 +4,7 @@
 # packaging/manifest.json, whose entry point describes the layout inside a
 # packed bundle rather than inside this tree, and a build guessing from that
 # starts a path that does not exist here.
-FROM node:22-slim
+FROM node:24-slim
 
 WORKDIR /app
 
