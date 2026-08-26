@@ -46,6 +46,23 @@ claude mcp add metacritic -- npx -y mcp-metacritic
 }
 ```
 
+### With Docker
+
+```json
+{
+  "mcpServers": {
+    "metacritic": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "ghcr.io/smeet666/mcp-metacritic:2.0.0"]
+    }
+  }
+}
+```
+
+`-i` keeps stdin open, which is where the protocol travels, and no `-t` is
+passed: a TTY rewrites the stream and breaks it. The container needs outbound
+HTTPS to `www.metacritic.com` and `backend.metacritic.com`, and nothing else: no volume, no port, no environment variable, no credential.
+
 **Bundle, without npm**
 
 Download `mcp-metacritic-<version>.mcpb` from
@@ -236,6 +253,24 @@ claude mcp add metacritic -- npx -y mcp-metacritic
   }
 }
 ```
+
+### Avec Docker
+
+```json
+{
+  "mcpServers": {
+    "metacritic": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "ghcr.io/smeet666/mcp-metacritic:2.0.0"]
+    }
+  }
+}
+```
+
+`-i` garde l'entrée standard ouverte, qui est le canal du protocole, et aucun
+`-t` n'est passé : un terminal réécrit le flux et le casse. Le conteneur a besoin
+d'un accès HTTPS sortant vers `www.metacritic.com` et `backend.metacritic.com`, et de rien d'autre :
+aucun volume, aucun port, aucune variable d'environnement, aucun identifiant.
 
 **Bundle, sans npm**
 
