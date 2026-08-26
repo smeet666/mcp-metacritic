@@ -48,6 +48,7 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run test/unit",
+    "coverage": "vitest run test/unit --coverage",
     "test:live": "vitest run test/live --testTimeout=60000",
     "build:fixtures": "node scripts/build-fixtures.mjs",
     "format": "biome check --write && prettier --write \"**/*.{md,yml}\"",
@@ -81,6 +82,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.10",
     "@types/node": "^24.13.3",
+    "@vitest/coverage-v8": "^4.1.11",
     "prettier": "3.9.6",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
