@@ -41,167 +41,19 @@
   "tools": [
     {
       "name": "search_titles",
-      "description": "Find films, shows and games by title.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "query": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Title or part of one, for example 'the matrix'."
-          },
-          "kind": {
-            "default": "any",
-            "description": "Restrict results to one catalogue. Metacritic searches all three at once.",
-            "type": "string",
-            "enum": ["movie", "show", "game", "any"]
-          },
-          "limit": {
-            "default": 10,
-            "description": "How many rows to return.",
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 50
-          }
-        },
-        "required": ["query"],
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false
-      }
+      "description": "Find films, shows and games by title."
     },
     {
       "name": "get_title",
-      "description": "Read one entry, section by section.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "slug": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Identifier from search_titles, such as 'the-matrix'."
-          },
-          "kind": {
-            "type": "string",
-            "enum": ["movie", "show", "game"],
-            "description": "Which catalogue the entry belongs to. Pass it back with the slug."
-          },
-          "sections": {
-            "default": ["basic", "scores"],
-            "description": "Which parts to return. Each extra section beyond the default costs a request.",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": ["basic", "scores", "awards", "production", "networks", "where_to_watch"]
-            }
-          },
-          "max_chars": {
-            "default": 4000,
-            "description": "Character budget for the description.",
-            "type": "integer",
-            "minimum": 200,
-            "maximum": 20000
-          },
-          "offset": {
-            "default": 0,
-            "description": "Where to resume the description.",
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          }
-        },
-        "required": ["slug", "kind"],
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false
-      }
+      "description": "Read one entry, section by section."
     },
     {
       "name": "get_reviews",
-      "description": "Read individual critic or audience reviews, with attribution.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "slug": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Identifier from search_titles, such as 'the-matrix'."
-          },
-          "kind": {
-            "type": "string",
-            "enum": ["movie", "show", "game"],
-            "description": "Which catalogue the entry belongs to. Pass it back with the slug."
-          },
-          "source": {
-            "default": "critic",
-            "description": "'critic' is the professional press, 'user' is the audience.",
-            "type": "string",
-            "enum": ["critic", "user"]
-          },
-          "sentiment": {
-            "default": "all",
-            "description": "Which slice to read. Metacritic groups reviews this way itself.",
-            "type": "string",
-            "enum": ["all", "positive", "neutral", "negative"]
-          },
-          "limit": {
-            "default": 10,
-            "description": "How many reviews to return from the sample Metacritic publishes.",
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 50
-          },
-          "offset": {
-            "default": 0,
-            "description": "How many of the sampled reviews to skip. The sample itself cannot be paged past.",
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          }
-        },
-        "required": ["slug", "kind"],
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false
-      }
+      "description": "Read individual critic or audience reviews, with attribution."
     },
     {
       "name": "browse_titles",
-      "description": "List by score, release date or current popularity.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "kind": {
-            "default": "movie",
-            "description": "Which catalogue to list.",
-            "type": "string",
-            "enum": ["movie", "show", "game"]
-          },
-          "sort": {
-            "default": "score",
-            "description": "'score' is the critic ranking, 'recent' is by release date, 'popular' is current attention.",
-            "type": "string",
-            "enum": ["score", "recent", "popular"]
-          },
-          "genre": {
-            "description": "Single genre name, such as Horror. Omit for all genres.",
-            "type": "string"
-          },
-          "limit": {
-            "default": 20,
-            "description": "How many rows to return.",
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 50
-          },
-          "offset": {
-            "default": 0,
-            "description": "How many rows to skip, for paging.",
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          }
-        },
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false
-      }
+      "description": "List by score, release date or current popularity."
     }
   ],
   "compatibility": {
