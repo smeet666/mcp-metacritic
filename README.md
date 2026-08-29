@@ -8,19 +8,26 @@
 [![M8ven](https://m8ven.ai/badge/mcp/smeet666-mcp-metacritic-1yvblv?variant=verified)](https://m8ven.ai/mcp/smeet666-mcp-metacritic-1yvblv)
 [![Install in Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=metacritic&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIm1jcC1tZXRhY3JpdGljIl19)
 [![Install in VS Code](https://img.shields.io/badge/VS_Code-Install-0098FF?style=flat&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=metacritic&config=%7B%22name%22%3A%22metacritic%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22mcp-metacritic%22%5D%7D)
+
 <!-- m8ven-verify: 01151bc5a8514e55175f063339bedc6f -->
 
-An [MCP](https://modelcontextprotocol.io) server for
-[Metacritic](https://www.metacritic.com). Search films, shows and games, read
-Metascores and audience scores, and quote what individual critics wrote, with
-the publication named and the article linked. **No API key, no account, no
-configuration.**
+[Metacritic](https://www.metacritic.com) gathers what critics and audiences said
+about films, television series and video games. Each entry carries the year, the
+age rating, the genres, and two scores of its own: the Metascore, a weighted
+average of the professional reviews, and the user score, out of ten, from the
+people who signed up to rate it. Under each entry sit the reviews themselves,
+with the publication that ran them and the quoted line.
 
-_(Version française plus bas / [French version below](#mcp-metacritic-français))_
+This server connects a chat client to that catalogue. You can search for a title,
+read its entry with its scores and its details, browse a catalogue by score,
+recency or popularity, and read the reviews of one title, filtered by critic or
+audience and by how favourable they were. It needs no API key and no account.
+
+_[Version française](#mcp-metacritic-français)_
 
 ---
 
-## Quickstart
+## Install
 
 **One-click install**
 
@@ -46,6 +53,8 @@ claude mcp add metacritic -- npx -y mcp-metacritic
 }
 ```
 
+Node 24 or later is required, and no environment variable has to be set.
+
 ### With Docker
 
 ```json
@@ -59,162 +68,211 @@ claude mcp add metacritic -- npx -y mcp-metacritic
 }
 ```
 
-`-i` keeps stdin open, which is where the protocol travels, and no `-t` is
-passed: a TTY rewrites the stream and breaks it. The container needs outbound
-HTTPS to `www.metacritic.com` and `backend.metacritic.com`, and nothing else: no volume, no port, no environment variable, no credential.
+`-i` keeps stdin open, which is where the protocol travels, and `-t` is left out
+because a TTY rewrites the stream. The container needs outbound HTTPS to
+`backend.metacritic.com`, and nothing else: no volume, no port, no credential.
 
-**Bundle, without npm**
+### Bundle, without npm
 
-Download `mcp-metacritic-<version>.mcpb` from
-[the latest release](https://github.com/smeet666/mcp-metacritic/releases/latest) and open
-it. A client that supports MCP bundles installs it on its own, with no npm and
-no configuration file to edit. The bundle carries its dependencies, so nothing
-is fetched at install time.
+Download `mcp-metacritic-2.0.0.mcpb` from
+[the latest release](https://github.com/smeet666/mcp-metacritic/releases/latest)
+and open it. A client that supports MCP bundles installs it on its own, with no
+npm and no configuration file to edit. The bundle carries its dependencies, so
+nothing is fetched at install time.
+
+## What you can ask
+
+- "What did critics make of The Matrix?"
+- "Read me a few negative reviews of that game."
+- "What are the best-reviewed horror films?"
+- "How does the user score compare to the Metascore?"
+- "What came out recently that reviewed well?"
+
+The ordinary path runs from a search to an entry: a row carries a `slug` and a
+`kind`, and `get_title` and `get_reviews` take both together.
 
 ## Tools
 
-| Tool            | What it does                                                | Key parameters                                    |
-| --------------- | ----------------------------------------------------------- | ------------------------------------------------- |
-| `search_titles` | Finds films, shows and games by title. Compact rows.        | `query`, `kind`, `limit`                          |
-| `get_title`     | Reads one entry, section by section.                        | `slug`, `kind`, `sections`, `max_chars`, `offset` |
-| `get_reviews`   | Individual critic or audience reviews, filtered by verdict. | `slug`, `kind`, `source`, `sentiment`, `limit`    |
-| `browse_titles` | Rankings: best rated, newest, most looked at.               | `kind`, `sort`, `genre`, `limit`, `offset`        |
+| Tool            | What it does                                                |
+| --------------- | ----------------------------------------------------------- |
+| `search_titles` | Finds films, series and games by title.                     |
+| `get_title`     | Reads one entry, its scores and its details.                |
+| `get_reviews`   | Reads the reviews of one entry, by source and by sentiment. |
+| `browse_titles` | Lists a catalogue by score, recency or popularity.          |
 
-Search returns a `slug` and a `kind` for every result, and the other tools take
-both. That is the intended chain: search, then read.
+A title is addressed by its `slug` together with its `kind`, since the same slug
+can name a film and a game.
 
-The server is **read-only**. It writes nothing back to Metacritic.
+### `search_titles`
 
-### Things worth knowing
+Finds films, series and games by title.
 
-**The two scores are on different scales.** The critic Metascore runs to 100 and
-the audience score to 10, so 73 and 8.9 describe similar opinions. Every score
-this server returns carries its own `max`, and the tool descriptions say so,
-because averaging the two is the single easiest mistake to make with this data.
+| Argument | Type                                            | Required | What it does               |
+| -------- | ----------------------------------------------- | -------- | -------------------------- |
+| `query`  | string, at least 1 character                    | yes      | A title, or part of one.   |
+| `kind`   | `movie`, `show`, `game` or `any`, default `any` | no       | Which catalogue to search. |
+| `limit`  | integer, 1 to 50, default `10`                  | no       | Rows to serve.             |
 
-**Sections are opt-in because an entry is large.** A detail response is 46 KB
-for a film, most of it artwork variants. `get_title` returns `basic` and
-`scores` by default; `awards`, `production`, `networks` and `where_to_watch`
-cost an extra request each and are only fetched when asked for.
+**In return:** rows carrying `slug` and `kind`, which `get_title` and
+`get_reviews` take together; `title`; `year`; `release_date`; `rating`, the age
+rating as published; `metascore`; `user_score`; and `source_url`. **A score the
+site has not computed is `null`, never `0`:** on a scale that starts at zero the
+two would be indistinguishable, and a title with too few reviews carries none.
 
-**Reviews are a sample, not a page.** Metacritic counts 36 critic reviews on a
-given film and serves 7 through this route, whatever paging you ask for. The
-tool says so rather than presenting the sample as the whole list, and links the
-entry page where the rest can be read.
+### `get_title`
 
-**A failure is never an empty result.** Every response carries either a `data`
-object or an `errors` array, and this server reads that distinction rather than
-guessing. A missing entry produces an error with a code; a request that could
-not be made says it could not be made, and never that Metacritic publishes
-nothing. Those are very different answers and a model cannot tell them apart on
-its own.
+Reads one entry. The heavier parts are asked for rather than served by default,
+and each one beyond the default costs a request.
 
-**Search matches titles, and nothing else.** It cannot find an entry from a
-plot detail, a person or a studio, it cannot page, and for a multi-word query
-the site counts matches loosely: "the matrix" reports over 55 000 entries
-because it counts anything matching either word.
+| Argument    | Type                                                                                                            | Required | What it does                          |
+| ----------- | --------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------- |
+| `slug`      | string, at least 1 character                                                                                    | yes      | The identifier a row carries.         |
+| `kind`      | `movie`, `show` or `game`                                                                                       | yes      | Which catalogue it belongs to.        |
+| `sections`  | array of `basic`, `scores`, `awards`, `production`, `networks`, `where_to_watch`, default `["basic", "scores"]` | no       | Which parts to return.                |
+| `max_chars` | integer, 200 to 20000, default `4000`                                                                           | no       | How much of the description to serve. |
+| `offset`    | integer, 0 or more, default `0`                                                                                 | no       | Where to resume the description.      |
 
-**Browse paging is approximate.** Metacritic does not order tied entries
-stably, so an entry can appear on two consecutive pages. Deduplicate by slug
-rather than counting rows.
+**In return:** the entry a search row carries, plus `description`, `tagline`,
+`genres`, `duration_minutes` and `imdb_id`, each `null` where the page states
+nothing. `total_chars`, `returned_chars` and `offset` describe the slice of the
+description served.
+
+### `get_reviews`
+
+Reads the reviews of one entry.
+
+| Argument    | Type                                                      | Required | What it does                       |
+| ----------- | --------------------------------------------------------- | -------- | ---------------------------------- |
+| `slug`      | string, at least 1 character                              | yes      | The identifier a row carries.      |
+| `kind`      | `movie`, `show` or `game`                                 | yes      | Which catalogue it belongs to.     |
+| `source`    | `critic` or `user`, default `critic`                      | no       | Whose reviews to read.             |
+| `sentiment` | `all`, `positive`, `neutral` or `negative`, default `all` | no       | How favourable a review has to be. |
+| `limit`     | integer, 1 to 50, default `10`                            | no       | Reviews to serve.                  |
+| `offset`    | integer, 0 or more, default `0`                           | no       | Reviews to skip, for paging.       |
+
+**In return:** `reviews`, each with its `quote` as published, its `score`, the
+`max` that score is out of, which is 100 for a critic and 10 for a user, and the
+`publication` that ran it. **Name the publication when quoting a review.**
+`total_available` counts the reviews matching the source and the sentiment asked
+for, and `next_offset` continues.
+
+### `browse_titles`
+
+Lists a catalogue.
+
+| Argument | Type                                            | Required | What it does                           |
+| -------- | ----------------------------------------------- | -------- | -------------------------------------- |
+| `kind`   | `movie`, `show` or `game`, default `movie`      | no       | Which catalogue to list.               |
+| `sort`   | `score`, `recent` or `popular`, default `score` | no       | How the rows are ordered.              |
+| `genre`  | string                                          | no       | A single genre name, such as `Horror`. |
+| `limit`  | integer, 1 to 50, default `20`                  | no       | Rows to serve.                         |
+| `offset` | integer, 0 or more, default `0`                 | no       | Rows to skip, for paging.              |
+
+**In return:** the rows `search_titles` returns, with `total_available`,
+`offset`, `next_offset` and the `kind`, `sort` and `genre` the listing was read
+under.
+
+## Two scores, two things measured
+
+The Metascore is a weighted average of professional reviews, out of 100. The user
+score is the average of what registered members gave, out of 10. They measure
+different populations on different scales, and a title can carry one and not the
+other. Read each with the `max` its reviews state, and report a missing score as
+missing.
 
 ## Configuration
 
-Every variable is optional. Set them in the `env` block of your MCP client config.
+Every variable is optional. Set them in the `env` block of your client config.
 
-| Variable                 | Default                              | Purpose                                                        |
-| ------------------------ | ------------------------------------ | -------------------------------------------------------------- |
-| `MC_USER_AGENT`          | `mcp-metacritic v<version> (<repo>)` | User-Agent sent to Metacritic.                                 |
-| `MC_MIN_INTERVAL_MS`     | `1000`                               | Minimum gap between requests. Values below 500 ms are ignored. |
-| `MC_TIMEOUT_MS`          | `15000`                              | Per-request timeout.                                           |
-| `MC_MAX_RETRIES`         | `3`                                  | Retries on refusals and transient errors.                      |
-| `MC_CACHE_TTL_MS`        | `86400000`                           | Catalogue cache lifetime (24 hours).                           |
-| `MC_SCORES_CACHE_TTL_MS` | `3600000`                            | Scores and reviews cache lifetime (1 hour).                    |
-| `MC_CACHE_MAX_ENTRIES`   | `200`                                | In-memory cache size.                                          |
-| `MC_LOG_LEVEL`           | `error`                              | `silent`, `error`, `info` or `debug`. Logs go to stderr.       |
+| Variable                 | Default              | What it does                                                                       |
+| ------------------------ | -------------------- | ---------------------------------------------------------------------------------- |
+| `MC_USER_AGENT`          | the project identity | Names your application to the site, with an address where a person can be reached. |
+| `MC_MIN_INTERVAL_MS`     | `1000`               | Gap between two requests, from 500 to 60000.                                       |
+| `MC_TIMEOUT_MS`          | `15000`              | Deadline for one request, from 1000 to 120000.                                     |
+| `MC_MAX_RETRIES`         | `3`                  | Attempts after a transient failure, from 0 to 10.                                  |
+| `MC_CACHE_TTL_MS`        | `86400000`           | How long a catalogue entry stays in memory, from 0 to 604800000.                   |
+| `MC_SCORES_CACHE_TTL_MS` | `3600000`            | How long scores and reviews stay in memory, from 0 to 86400000.                    |
+| `MC_CACHE_MAX_ENTRIES`   | `200`                | Answers held in memory at once, from 0 to 10000.                                   |
+| `MC_LOG_LEVEL`           | `error`              | `silent`, `error`, `info` or `debug`, written to stderr.                           |
 
-A User-Agent claiming to be a browser has the project's own identity appended
-to it, so the traffic stays attributable whatever a caller sets.
+Scores move as reviews come in, especially around a release, so they are held for
+an hour where a catalogue entry is held for a day. A value outside its range
+falls back to the default, and the reason is written to stderr.
 
-## How it works
+## Errors
 
-Metacritic's website is served by a JSON backend at
-`backend.metacritic.com`, and this server calls the same routes its own pages
-call. It sends one request at a time, paces itself, backs off when refused, and
-keeps two in-memory caches: a day for catalogue entries, which change when
-someone edits them, and an hour for scores and reviews, which move as reviews
-land.
+Every failure carries one of six codes, a message, and where it helps a hint
+naming the next move.
 
-Streaming links arrive wrapped in click-tracking redirects of around 800
-characters, with the real destination inside. This server unwraps them: you get
-the provider's own URL, not a tracker.
+| Code            | What happened                                           | What to do                                                                                                  |
+| --------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `not_found`     | The site answered, and holds no such entry.             | Check the slug and the kind with `search_titles`.                                                           |
+| `invalid_input` | The arguments were refused before any request went out. | Read the message, which names the argument.                                                                 |
+| `rate_limited`  | The site asked this client to slow down.                | Wait the number of seconds the hint names and call again with the same arguments. The entry is still there. |
+| `parse_failure` | The answer arrived in a shape this client cannot read.  | Report it at [the issue tracker](https://github.com/smeet666/mcp-metacritic/issues).                        |
+| `network_error` | The request did not complete.                           | Try again shortly.                                                                                          |
+| `timeout`       | The request passed its deadline.                        | Raise `MC_TIMEOUT_MS`, or ask for fewer rows.                                                               |
 
-### On the terms of use
+## As a library
 
-`metacritic.com/terms-of-use/` returns 404, so the terms could not be read.
-This is worth stating plainly rather than leaving implicit.
+The layer reading the site is published on its own, with its pacing, its cache
+and its errors, and with no protocol attached.
 
-What is verifiable: the backend host serves no `robots.txt` at all, requires no
-API key, and did not throttle ten consecutive requests during testing. Those
-are the conditions this server operates under, and it does not take them as
-permission to be greedy. It sends one request per second at most, identifies
-itself, caches what it reads, and carries a link back to Metacritic on every
-result, including on every quoted review.
+```ts
+import { McClient } from "mcp-metacritic/client";
 
-If Metacritic would rather it did not exist, opening an issue is enough.
+const client = new McClient();
+const { data, cached } = await client.getTitle({ slug: "the-matrix", kind: "movie" });
+console.log(data.title, data.metascore, cached);
+```
+
+Each read answers `{ data, cached }`, and throws an error carrying one of the six
+codes. The floor between two requests holds here as well.
+
+## Pacing and attribution
+
+Requests go out one at a time with at least a second between them, and the floor
+of half a second holds however the server is configured. The `User-Agent` always
+ends with the project identity and an address where a person can be reached.
+
+Every result carries the address of the Metacritic page, and every quoted review
+carries the publication that ran it. The reviews belong to their authors and to
+the publications that ran them.
+
+This MCP server is an unofficial project, with no affiliation to Metacritic.
+
+## Privacy
+
+This server collects nothing about you and sends nothing to its author. It runs
+on your machine, contacts `backend.metacritic.com` and nothing else, holds its
+answers in memory while it runs, and writes nothing to disk.
+[PRIVACY.md](PRIVACY.md) states what a request carries and which settings change
+any of it.
 
 ## Development
 
 ```bash
 npm install
-npm run build:fixtures   # regenerate the JSON test fixtures
-npm test                 # unit tests, no network
-npm run typecheck
-npm run build
-MC_LIVE=1 npm run test:live   # hits the real site, excluded from CI
-npm run inspector        # explore the tools in the MCP Inspector
+npm run build:fixtures
+npm test
+npm run check
 ```
 
-Fixtures are generated, not captured: every title, quote, publication and
-studio in `test/fixtures` is invented, so the tests are deterministic and no
-third-party content lives in this repository.
-
-The API layer (`src/mc`) does not import the MCP SDK and is published
-separately as `mcp-metacritic/client`, so it can be used as a plain library. It
-enforces the pacing floor and the identifying User-Agent itself, so those hold
-for a library consumer too.
-
-## Reviews, scores and copyright
-
-Metascores, review texts and the editorial work behind them belong to
-Metacritic and to the publications it aggregates. This project claims no rights
-over them and ships none of their content.
-
-Review quotes are returned as excerpts, capped in length, always with the
-publication named and with a link to the original article where the site
-provides one. If you repeat a quote, keep both. If you cite a score, credit
-Metacritic and link the entry: every result carries a `source_url`.
-
-This is an unofficial project, with no affiliation to or endorsement by
-Metacritic or Fandom.
+Tests run against generated fixtures and make no network request. The live suite,
+`npm run test:live`, makes one request per route and runs nightly against the
+site itself.
 
 ## Contributing
 
-Bugs, questions and ideas all belong in
-[the issue tracker](https://github.com/smeet666/mcp-metacritic/issues). Pull requests
-are welcome; please open an issue first so we can agree on what the right
-answer is before you write it. [CONTRIBUTING.md](CONTRIBUTING.md) has the
-detail, and [SECURITY.md](SECURITY.md) covers anything exploitable.
-
-## Support
-
-These servers are free and stay free. If one of them saved you an afternoon,
-you can [buy me a coffee](https://buymeacoffee.com/smeet666).
+Bugs, questions and ideas belong in
+[the issue tracker](https://github.com/smeet666/mcp-metacritic/issues). Pull
+requests are welcome; opening an issue first helps agree on the shape of the
+change. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT. See [LICENSE](./LICENSE). The license covers this source code only, not the
-data retrieved through it.
+MIT, see [LICENSE](LICENSE). The scores and the reviews belong to Metacritic and
+to the publications it quotes.
 
 ---
 
@@ -222,13 +280,22 @@ data retrieved through it.
 
 # mcp-metacritic (français)
 
-Un serveur [MCP](https://modelcontextprotocol.io) pour
-[Metacritic](https://www.metacritic.com). Cherchez des films, séries et jeux,
-lisez les Metascores et les notes du public, et citez ce qu'ont écrit les
-critiques, avec la publication nommée et l'article lié. **Sans clé d'API, sans
-compte, sans configuration.**
+_[English version](#mcp-metacritic)_
 
-## Démarrage rapide
+[Metacritic](https://www.metacritic.com) rassemble ce que la critique et le
+public ont dit des films, des séries et des jeux vidéo. Chaque fiche porte
+l'année, la classification par âge, les genres, et deux notes qui lui sont
+propres : le Metascore, moyenne pondérée des critiques professionnelles, et la
+note des utilisateurs, sur dix, donnée par les inscrits. Sous chaque fiche se
+trouvent les critiques elles-mêmes, avec la publication qui les a signées et la
+phrase citée.
+
+Ce serveur relie un client de conversation à ce catalogue. On peut y chercher un
+titre, lire sa fiche avec ses notes et ses détails, parcourir un catalogue par
+note, par fraîcheur ou par popularité, et lire les critiques d'un titre, filtrées
+par source et par tonalité. Aucune clé d'API, aucun compte.
+
+## Installation
 
 **Installation en un clic**
 
@@ -241,7 +308,7 @@ compte, sans configuration.**
 claude mcp add metacritic -- npx -y mcp-metacritic
 ```
 
-**Claude Desktop, Cursor, et tout client utilisant le format standard**
+**Claude Desktop, Cursor, et tout client au format de configuration standard**
 
 ```json
 {
@@ -253,6 +320,9 @@ claude mcp add metacritic -- npx -y mcp-metacritic
   }
 }
 ```
+
+Node 24 ou plus récent est nécessaire, et aucune variable d'environnement n'est à
+renseigner.
 
 ### Avec Docker
 
@@ -267,149 +337,212 @@ claude mcp add metacritic -- npx -y mcp-metacritic
 }
 ```
 
-`-i` garde l'entrée standard ouverte, qui est le canal du protocole, et aucun
-`-t` n'est passé : un terminal réécrit le flux et le casse. Le conteneur a besoin
-d'un accès HTTPS sortant vers `www.metacritic.com` et `backend.metacritic.com`, et de rien d'autre :
-aucun volume, aucun port, aucune variable d'environnement, aucun identifiant.
+`-i` garde l'entrée standard ouverte, qui est le canal du protocole, et `-t` est
+omis parce qu'un TTY réécrit le flux. Le conteneur a besoin d'un accès HTTPS
+sortant vers `backend.metacritic.com`, et de rien d'autre : aucun volume, aucun
+port, aucun identifiant.
 
-**Bundle, sans npm**
+### Bundle, sans npm
 
-Téléchargez `mcp-metacritic-<version>.mcpb` depuis
-[la dernière release](https://github.com/smeet666/mcp-metacritic/releases/latest) et
-ouvrez-le. Un client compatible avec les bundles MCP l'installe seul, sans npm
-ni fichier de configuration à modifier. Le bundle embarque ses dépendances,
-donc rien n'est téléchargé à l'installation.
+Téléchargez `mcp-metacritic-2.0.0.mcpb` depuis
+[la dernière publication](https://github.com/smeet666/mcp-metacritic/releases/latest)
+et ouvrez-le. Un client qui gère les bundles MCP l'installe seul, sans npm et
+sans fichier de configuration à modifier. Le bundle emporte ses dépendances, donc
+rien n'est téléchargé à l'installation.
 
-## Outils
+## Ce qu'on peut demander
 
-| Outil           | Rôle                                                      | Paramètres principaux                             |
-| --------------- | --------------------------------------------------------- | ------------------------------------------------- |
-| `search_titles` | Trouve films, séries et jeux par titre. Lignes compactes. | `query`, `kind`, `limit`                          |
-| `get_title`     | Lit une fiche, section par section.                       | `slug`, `kind`, `sections`, `max_chars`, `offset` |
-| `get_reviews`   | Critiques presse ou public, filtrables par verdict.       | `slug`, `kind`, `source`, `sentiment`, `limit`    |
-| `browse_titles` | Classements : mieux notés, plus récents, plus consultés.  | `kind`, `sort`, `genre`, `limit`, `offset`        |
+- « Qu'a pensé la critique de Matrix ? »
+- « Lis-moi quelques critiques négatives de ce jeu. »
+- « Quels sont les films d'horreur les mieux notés ? »
+- « Comment la note du public se compare-t-elle au Metascore ? »
+- « Qu'est-il sorti récemment qui a été bien reçu ? »
 
-La recherche renvoie un `slug` et un `kind` pour chaque résultat, que les autres
-outils reprennent. C'est l'enchaînement prévu : chercher, puis lire.
+Le chemin ordinaire va d'une recherche à une fiche : une ligne porte un `slug` et
+un `kind`, et `get_title` comme `get_reviews` reprennent les deux ensemble.
 
-Le serveur est en **lecture seule**. Il n'écrit rien vers Metacritic.
+## Les outils
 
-### Ce qu'il faut savoir
+| Outil           | Ce qu'il fait                                                 |
+| --------------- | ------------------------------------------------------------- |
+| `search_titles` | Trouve des films, des séries et des jeux par leur titre.      |
+| `get_title`     | Lit une fiche, ses notes et ses détails.                      |
+| `get_reviews`   | Lit les critiques d'une fiche, par source et par tonalité.    |
+| `browse_titles` | Liste un catalogue par note, par fraîcheur ou par popularité. |
 
-**Les deux notes ne sont pas sur la même échelle.** Le Metascore critique va
-jusqu'à 100 et la note du public jusqu'à 10, donc 73 et 8,9 décrivent des avis
-voisins. Chaque note renvoyée porte son propre `max`, et les descriptions
-d'outils le disent, parce que les additionner est l'erreur la plus facile à
-commettre avec ces données.
+Un titre s'adresse par son `slug` accompagné de son `kind`, un même slug pouvant
+nommer un film et un jeu.
 
-**Les sections sont à la demande, car une fiche est volumineuse.** Une réponse
-de détail fait 46 Ko pour un film, essentiellement des variantes d'illustration.
-`get_title` renvoie `basic` et `scores` par défaut ; `awards`, `production`,
-`networks` et `where_to_watch` coûtent une requête chacune et ne sont récupérées
-que si on les demande.
+### `search_titles`
 
-**Les critiques sont un échantillon, pas une page.** Metacritic en compte 36 sur
-un film donné et en sert 7 par cette route, quelle que soit la pagination
-demandée. L'outil le dit au lieu de présenter l'échantillon comme la liste
-complète, et renvoie vers la fiche où le reste se lit.
+Trouve des films, des séries et des jeux par leur titre.
 
-**Un échec n'est jamais un résultat vide.** Chaque réponse porte soit un objet
-`data`, soit un tableau `errors`, et ce serveur lit cette distinction au lieu de
-la deviner. Une fiche absente produit une erreur avec un code ; une requête qui
-n'a pas abouti dit qu'elle n'a pas abouti, jamais que Metacritic ne publie rien.
-Ce sont deux réponses très différentes, qu'un modèle ne peut pas distinguer seul.
+| Argument | Type                                           | Requis | Ce qu'il fait             |
+| -------- | ---------------------------------------------- | ------ | ------------------------- |
+| `query`  | chaîne, au moins 1 caractère                   | oui    | Un titre, ou une partie.  |
+| `kind`   | `movie`, `show`, `game` ou `any`, défaut `any` | non    | Le catalogue où chercher. |
+| `limit`  | entier, 1 à 50, défaut `10`                    | non    | Lignes à servir.          |
 
-**La recherche porte sur les titres, et rien d'autre.** Elle ne retrouve pas une
-fiche depuis un élément d'intrigue, une personne ou un studio, elle ne pagine
-pas, et sur une requête de plusieurs mots le site compte large : « the matrix »
-annonce plus de 55 000 entrées parce qu'il compte tout ce qui correspond à l'un
-des deux mots.
+**En retour :** des lignes portant `slug` et `kind`, que `get_title` et
+`get_reviews` reprennent ensemble ; `title` ; `year` ; `release_date` ; `rating`,
+la classification par âge telle que publiée ; `metascore` ; `user_score` ; et
+`source_url`. **Une note que le site n'a pas calculée vaut `null`, jamais `0` :**
+sur une échelle qui commence à zéro les deux seraient indiscernables, et un titre
+avec trop peu de critiques n'en porte aucune.
 
-**La pagination des classements est approximative.** Metacritic n'ordonne pas
-les ex æquo de façon stable, donc une entrée peut apparaître sur deux pages
-consécutives. Dédoublonnez par slug plutôt que de compter les lignes.
+### `get_title`
+
+Lit une fiche. Les parties lourdes se demandent au lieu d'être servies par
+défaut, et chacune au-delà du défaut coûte une requête.
+
+| Argument    | Type                                                                                                             | Requis | Ce qu'il fait                        |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------ |
+| `slug`      | chaîne, au moins 1 caractère                                                                                     | oui    | L'identifiant d'une ligne.           |
+| `kind`      | `movie`, `show` ou `game`                                                                                        | oui    | Le catalogue dont il relève.         |
+| `sections`  | tableau de `basic`, `scores`, `awards`, `production`, `networks`, `where_to_watch`, défaut `["basic", "scores"]` | non    | Les parties à rendre.                |
+| `max_chars` | entier, 200 à 20000, défaut `4000`                                                                               | non    | La longueur de description à servir. |
+| `offset`    | entier, 0 ou plus, défaut `0`                                                                                    | non    | Où reprendre la description.         |
+
+**En retour :** la fiche que porte une ligne de recherche, plus `description`,
+`tagline`, `genres`, `duration_minutes` et `imdb_id`, chacun `null` là où la page
+n'indique rien. `total_chars`, `returned_chars` et `offset` décrivent la tranche
+de description servie.
+
+### `get_reviews`
+
+Lit les critiques d'une fiche.
+
+| Argument    | Type                                                     | Requis | Ce qu'il fait                      |
+| ----------- | -------------------------------------------------------- | ------ | ---------------------------------- |
+| `slug`      | chaîne, au moins 1 caractère                             | oui    | L'identifiant d'une ligne.         |
+| `kind`      | `movie`, `show` ou `game`                                | oui    | Le catalogue dont il relève.       |
+| `source`    | `critic` ou `user`, défaut `critic`                      | non    | De qui lire les critiques.         |
+| `sentiment` | `all`, `positive`, `neutral` ou `negative`, défaut `all` | non    | La tonalité exigée d'une critique. |
+| `limit`     | entier, 1 à 50, défaut `10`                              | non    | Critiques à servir.                |
+| `offset`    | entier, 0 ou plus, défaut `0`                            | non    | Critiques à sauter, pour paginer.  |
+
+**En retour :** `reviews`, chacune avec sa `quote` telle que publiée, son
+`score`, le `max` sur lequel cette note est donnée, qui vaut 100 pour un critique
+et 10 pour un utilisateur, et la `publication` qui l'a signée. **Nommez la
+publication quand vous citez une critique.** `total_available` compte les
+critiques correspondant à la source et à la tonalité demandées, et `next_offset`
+poursuit.
+
+### `browse_titles`
+
+Liste un catalogue.
+
+| Argument | Type                                           | Requis | Ce qu'il fait                         |
+| -------- | ---------------------------------------------- | ------ | ------------------------------------- |
+| `kind`   | `movie`, `show` ou `game`, défaut `movie`      | non    | Le catalogue à lister.                |
+| `sort`   | `score`, `recent` ou `popular`, défaut `score` | non    | L'ordre des lignes.                   |
+| `genre`  | chaîne                                         | non    | Un seul nom de genre, comme `Horror`. |
+| `limit`  | entier, 1 à 50, défaut `20`                    | non    | Lignes à servir.                      |
+| `offset` | entier, 0 ou plus, défaut `0`                  | non    | Lignes à sauter, pour paginer.        |
+
+**En retour :** les lignes que rend `search_titles`, avec `total_available`,
+`offset`, `next_offset` et les `kind`, `sort` et `genre` sous lesquels la liste a
+été lue.
+
+## Deux notes, deux choses mesurées
+
+Le Metascore est une moyenne pondérée des critiques professionnelles, sur 100. La
+note des utilisateurs est la moyenne de ce qu'ont donné les membres inscrits, sur 10. Elles mesurent des populations différentes sur des échelles différentes, et
+un titre peut porter l'une sans l'autre. Lisez chacune avec le `max` que ses
+critiques indiquent, et rapportez une note absente comme absente.
 
 ## Configuration
 
-Toutes les variables sont optionnelles, à déclarer dans le bloc `env` de votre client.
+Chaque variable est facultative. Elles se posent dans le bloc `env` de la
+configuration du client.
 
-| Variable                 | Défaut                                | Rôle                                                              |
-| ------------------------ | ------------------------------------- | ----------------------------------------------------------------- |
-| `MC_USER_AGENT`          | `mcp-metacritic v<version> (<dépôt>)` | User-Agent envoyé à Metacritic.                                   |
-| `MC_MIN_INTERVAL_MS`     | `1000`                                | Écart minimal entre requêtes. Sous 500 ms, la valeur est ignorée. |
-| `MC_TIMEOUT_MS`          | `15000`                               | Délai d'attente par requête.                                      |
-| `MC_MAX_RETRIES`         | `3`                                   | Tentatives en cas de refus ou d'erreur passagère.                 |
-| `MC_CACHE_TTL_MS`        | `86400000`                            | Durée de vie du cache catalogue (24 heures).                      |
-| `MC_SCORES_CACHE_TTL_MS` | `3600000`                             | Durée de vie du cache notes et critiques (1 heure).               |
-| `MC_CACHE_MAX_ENTRIES`   | `200`                                 | Taille des caches mémoire.                                        |
-| `MC_LOG_LEVEL`           | `error`                               | `silent`, `error`, `info` ou `debug`. Logs sur stderr.            |
+| Variable                 | Défaut               | Ce qu'elle fait                                                                    |
+| ------------------------ | -------------------- | ---------------------------------------------------------------------------------- |
+| `MC_USER_AGENT`          | l'identité du projet | Nomme votre application auprès du site, avec une adresse où joindre une personne.  |
+| `MC_MIN_INTERVAL_MS`     | `1000`               | Écart entre deux requêtes, de 500 à 60000.                                         |
+| `MC_TIMEOUT_MS`          | `15000`              | Délai d'une requête, de 1000 à 120000.                                             |
+| `MC_MAX_RETRIES`         | `3`                  | Tentatives après un échec passager, de 0 à 10.                                     |
+| `MC_CACHE_TTL_MS`        | `86400000`           | Durée pendant laquelle une fiche reste en mémoire, de 0 à 604800000.               |
+| `MC_SCORES_CACHE_TTL_MS` | `3600000`            | Durée pendant laquelle les notes et critiques restent en mémoire, de 0 à 86400000. |
+| `MC_CACHE_MAX_ENTRIES`   | `200`                | Réponses gardées en mémoire à la fois, de 0 à 10000.                               |
+| `MC_LOG_LEVEL`           | `error`              | `silent`, `error`, `info` ou `debug`, écrit sur la sortie d'erreur.                |
 
-Un User-Agent se faisant passer pour un navigateur se voit adjoindre l'identité
-du projet, pour que le trafic reste attribuable quoi que règle l'appelant.
+Les notes bougent au fil des critiques, surtout autour d'une sortie, donc elles
+sont gardées une heure là où une fiche l'est un jour. Une valeur hors de sa plage
+retombe sur le défaut, et la raison est écrite sur la sortie d'erreur.
 
-## Fonctionnement
+## Erreurs
 
-Le site de Metacritic est servi par un backend JSON à `backend.metacritic.com`,
-et ce serveur appelle les mêmes routes que leurs propres pages. Il envoie une
-requête à la fois, s'impose un rythme, ralentit en cas de refus, et garde deux
-caches mémoire : un jour pour les fiches, qui ne bougent qu'à l'édition, et une
-heure pour les notes et critiques, qui évoluent au fil des publications.
+Chaque échec porte un des six codes, un message, et quand cela aide une
+indication du geste suivant.
 
-Les liens de streaming arrivent enveloppés dans des redirections publicitaires
-d'environ 800 caractères, avec la vraie destination à l'intérieur. Ce serveur
-les déballe : vous obtenez l'URL du fournisseur, pas celle d'un traqueur.
+| Code            | Ce qui s'est passé                                   | Que faire                                                                                       |
+| --------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `not_found`     | Le site a répondu, et n'a pas cette fiche.           | Vérifiez le slug et le type avec `search_titles`.                                               |
+| `invalid_input` | Les arguments ont été refusés avant toute requête.   | Lisez le message, qui nomme l'argument.                                                         |
+| `rate_limited`  | Le site demande à ce client de ralentir.             | Attendez les secondes indiquées et rappelez avec les mêmes arguments. La fiche est toujours là. |
+| `parse_failure` | La réponse est arrivée dans une forme illisible ici. | Signalez-le sur [le suivi d'incidents](https://github.com/smeet666/mcp-metacritic/issues).      |
+| `network_error` | La requête n'a pas abouti.                           | Réessayez sous peu.                                                                             |
+| `timeout`       | La requête a dépassé son délai.                      | Augmentez `MC_TIMEOUT_MS`, ou demandez moins de lignes.                                         |
 
-### À propos des conditions d'utilisation
+## Comme bibliothèque
 
-`metacritic.com/terms-of-use/` renvoie une 404, les conditions n'ont donc pas pu
-être lues. Autant le dire clairement plutôt que de le passer sous silence.
+La couche qui lit le site est publiée seule, avec son rythme, son cache et ses
+erreurs, sans protocole attaché.
 
-Ce qui est vérifiable : l'hôte du backend ne sert aucun `robots.txt`, ne demande
-aucune clé, et n'a ralenti aucune de dix requêtes consécutives lors des tests.
-Ce sont les conditions dans lesquelles ce serveur opère, et il n'y voit pas une
-autorisation d'être gourmand. Il envoie au plus une requête par seconde,
-s'identifie, met en cache ce qu'il lit, et porte un lien vers Metacritic sur
-chaque résultat, y compris sur chaque critique citée.
+```ts
+import { McClient } from "mcp-metacritic/client";
 
-Si Metacritic préfère qu'il n'existe pas, ouvrir une issue suffit.
+const client = new McClient();
+const { data, cached } = await client.getTitle({ slug: "the-matrix", kind: "movie" });
+console.log(data.title, data.metascore, cached);
+```
+
+Chaque lecture répond `{ data, cached }`, et lève une erreur portant un des six
+codes. Le plancher entre deux requêtes tient également ici.
+
+## Rythme et attribution
+
+Les requêtes partent une à une avec au moins une seconde entre elles, et le
+plancher d'une demi-seconde tient quelle que soit la configuration. Le
+`User-Agent` se termine toujours par l'identité du projet et une adresse où
+joindre une personne.
+
+Chaque résultat porte l'adresse de la page Metacritic, et chaque critique citée
+porte la publication qui l'a signée. Les critiques appartiennent à leurs auteurs
+et aux publications qui les ont publiées.
+
+Ce MCP est un projet non officiel, sans affiliation à Metacritic.
+
+## Confidentialité
+
+Ce serveur ne collecte rien sur vous et n'envoie rien à son auteur. Il tourne sur
+votre machine, ne joint que `backend.metacritic.com`, garde ses réponses en
+mémoire le temps qu'il tourne, et n'écrit rien sur le disque.
+[PRIVACY.md](PRIVACY.md) dit ce qu'une requête emporte et quels réglages changent
+cela.
 
 ## Développement
 
 ```bash
 npm install
-npm run build:fixtures   # régénère les fixtures JSON de test
-npm test                 # tests unitaires, sans réseau
-npm run typecheck
-npm run build
-MC_LIVE=1 npm run test:live   # touche le vrai site, exclu de la CI
-npm run inspector        # explorer les outils dans le MCP Inspector
+npm run build:fixtures
+npm test
+npm run check
 ```
 
-Les fixtures sont générées, pas capturées : chaque titre, citation, publication
-et studio de `test/fixtures` est inventé, ce qui rend les tests déterministes et
-évite de stocker du contenu tiers dans ce dépôt.
+Les tests s'exécutent sur des fixtures engendrées et n'émettent aucune requête.
+La suite en direct, `npm run test:live`, émet une requête par route et tourne
+chaque nuit contre le site lui-même.
 
-La couche API (`src/mc`) n'importe pas le SDK MCP et est publiée séparément sous
-`mcp-metacritic/client`, utilisable comme simple bibliothèque. Elle applique
-elle-même le plancher de cadence et le User-Agent identifiant, qui valent donc
-aussi pour qui l'utilise en bibliothèque.
+## Contribuer
 
-## Critiques, notes et droits d'auteur
-
-Les Metascores, les textes de critiques et le travail éditorial qui les
-sous-tend appartiennent à Metacritic et aux publications qu'il agrège. Ce projet
-ne revendique aucun droit dessus et n'embarque aucun de leurs contenus.
-
-Les citations sont renvoyées sous forme d'extraits, de longueur bornée, toujours
-avec la publication nommée et un lien vers l'article d'origine quand le site en
-fournit un. Si vous reprenez une citation, conservez les deux. Si vous citez une
-note, créditez Metacritic et liez la fiche : chaque résultat porte un
-`source_url`.
-
-Projet non officiel, sans affiliation à Metacritic ou Fandom ni approbation de
-leur part.
+Les anomalies, les questions et les idées ont leur place dans
+[le suivi d'incidents](https://github.com/smeet666/mcp-metacritic/issues). Les
+propositions de modification sont bienvenues ; ouvrir un ticket d'abord aide à
+s'accorder sur la forme du changement. Voir [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licence
 
-MIT, voir [LICENSE](./LICENSE). La licence couvre uniquement le code source, pas
-les données récupérées par son intermédiaire.
+MIT, voir [LICENSE](LICENSE). Les notes et les critiques appartiennent à
+Metacritic et aux publications qu'il cite.
