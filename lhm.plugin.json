@@ -1,0 +1,1147 @@
+{
+  "author": "Damien Bouissou",
+  "authorUrl": "https://github.com/smeet666",
+  "description": "MCP server for Metacritic. Search films, shows and games, read Metascores and critic reviews with attribution. No API key required.",
+  "homepage": "https://github.com/smeet666/mcp-metacritic#readme",
+  "identifier": "smeet666-mcp-metacritic",
+  "name": "mcp-metacritic",
+  "prompts": [],
+  "resources": [],
+  "tags": [
+    "mcp",
+    "modelcontextprotocol",
+    "model-context-protocol",
+    "mcp-server",
+    "metacritic",
+    "metascore",
+    "movies",
+    "tv",
+    "games",
+    "reviews",
+    "ratings",
+    "claude",
+    "cursor",
+    "llm",
+    "ai",
+    "no-api-key"
+  ],
+  "tools": [
+    {
+      "name": "search_titles",
+      "title": "Search Metacritic",
+      "description": "Search Metacritic for films, shows and games by title. Returns one compact row per match, carrying the critic Metascore, so a question about the critical verdict needs no second call. Search rows carry no audience score: use get_title for that, or browse_titles, which does return it. Use the slug and kind with get_title for the full entry, or with get_reviews for what critics wrote. There is no paging: 'limit' is the only lever, and results always start from the most relevant match. This searches titles only. It cannot find an entry from a plot detail, a person or a studio.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Title or part of one, for example 'the matrix'."
+          },
+          "kind": {
+            "default": "any",
+            "description": "Restrict results to one catalogue. Metacritic searches all three at once.",
+            "type": "string",
+            "enum": ["movie", "show", "game", "any"]
+          },
+          "limit": {
+            "default": 10,
+            "description": "How many rows to return.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": ["query"],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": ["movie", "show", "game"]
+                },
+                "title": {
+                  "type": "string"
+                },
+                "slug": {
+                  "type": "string",
+                  "description": "Identifier to pass to get_title and get_reviews, with 'kind'."
+                },
+                "year": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "release_date": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "rating": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Age rating as published, such as R or TV-MA."
+                },
+                "metascore": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Critic score, out of 100. Not comparable to user_score without rescaling."
+                },
+                "user_score": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Audience score, out of 10. Not comparable to metascore without rescaling."
+                },
+                "source_url": {
+                  "type": "string",
+                  "description": "Metacritic page. Show this when citing the entry."
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "title",
+                "slug",
+                "year",
+                "release_date",
+                "rating",
+                "metascore",
+                "user_score",
+                "source_url"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "total_available": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "How many entries Metacritic counted. For a query of several words it counts entries matching any one of them, so the number is far larger than the useful matches and should not be read as a match count."
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["query", "results", "total_available", "notes"],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_title",
+      "title": "Read an entry",
+      "description": "Read one Metacritic entry by slug and kind, both from search_titles. Sections are opt-in because a full entry is large: 'basic' and 'scores' are the default and cover most questions. 'scores' fetches the critic and audience breakdowns, each with its own scale, so never compare the two numbers directly. Sections gate the payload: asking for 'scores' alone returns no description, and 'basic' alone returns no scores. 'networks' lists the broadcasters of a show; 'where_to_watch' costs an extra request and covers films and shows only. A long description paginates: when 'truncated' is true, call again with 'offset' set to 'next_offset'.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Identifier from search_titles, such as 'the-matrix'."
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["movie", "show", "game"],
+            "description": "Which catalogue the entry belongs to. Pass it back with the slug."
+          },
+          "sections": {
+            "default": ["basic", "scores"],
+            "description": "Which parts to return. Each extra section beyond the default costs a request.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["basic", "scores", "awards", "production", "networks", "where_to_watch"]
+            }
+          },
+          "max_chars": {
+            "default": 4000,
+            "description": "Character budget for the description.",
+            "type": "integer",
+            "minimum": 200,
+            "maximum": 20000
+          },
+          "offset": {
+            "default": 0,
+            "description": "Where to resume the description.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": ["slug", "kind"],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "kind": {
+                "type": "string",
+                "enum": ["movie", "show", "game"]
+              },
+              "title": {
+                "type": "string"
+              },
+              "slug": {
+                "type": "string",
+                "description": "Identifier to pass to get_title and get_reviews, with 'kind'."
+              },
+              "year": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "release_date": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "rating": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Age rating as published, such as R or TV-MA."
+              },
+              "metascore": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Critic score, out of 100. Not comparable to user_score without rescaling."
+              },
+              "user_score": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Audience score, out of 10. Not comparable to metascore without rescaling."
+              },
+              "source_url": {
+                "type": "string",
+                "description": "Metacritic page. Show this when citing the entry."
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "title",
+              "slug",
+              "year",
+              "release_date",
+              "rating",
+              "metascore",
+              "user_score",
+              "source_url"
+            ],
+            "additionalProperties": false
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tagline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Runtime in minutes for a film, or the length of a typical episode for a show."
+          },
+          "imdb_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "IMDb identifier, usable to cross-reference other sources."
+          },
+          "total_chars": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Length of the full description."
+          },
+          "returned_chars": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pass as 'offset' to read the rest."
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "critic_score": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "score": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "max": {
+                    "type": "number",
+                    "description": "Scale this score is on: 100 for critics, 10 for users."
+                  },
+                  "review_count": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "positive_count": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "neutral_count": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "negative_count": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "sentiment": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Metacritic's own wording for the verdict."
+                  }
+                },
+                "required": [
+                  "score",
+                  "max",
+                  "review_count",
+                  "positive_count",
+                  "neutral_count",
+                  "negative_count",
+                  "sentiment"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "user_score": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "score": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "max": {
+                    "type": "number",
+                    "description": "Scale this score is on: 100 for critics, 10 for users."
+                  },
+                  "review_count": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "positive_count": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "neutral_count": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "negative_count": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "sentiment": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Metacritic's own wording for the verdict."
+                  }
+                },
+                "required": [
+                  "score",
+                  "max",
+                  "review_count",
+                  "positive_count",
+                  "neutral_count",
+                  "negative_count",
+                  "sentiment"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "awards": {
+            "description": "One tally per ceremony. Metacritic publishes no per-category detail.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ceremony": {
+                  "type": "string",
+                  "description": "Awards body, such as 'Academy Awards, USA'."
+                },
+                "wins": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Null when the source records no win."
+                },
+                "nominations": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": ["ceremony", "wins", "nominations"],
+              "additionalProperties": false
+            }
+          },
+          "networks": {
+            "description": "Broadcasters, for shows.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "production": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": ["name", "id"],
+              "additionalProperties": false
+            }
+          },
+          "where_to_watch": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "url": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": ["provider", "kind", "url"],
+              "additionalProperties": false
+            }
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "tagline",
+          "genres",
+          "duration_minutes",
+          "imdb_id",
+          "total_chars",
+          "returned_chars",
+          "offset",
+          "next_offset",
+          "truncated",
+          "critic_score",
+          "user_score",
+          "notes"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_reviews",
+      "title": "Read reviews",
+      "description": "Read individual reviews of a Metacritic entry, from critics or from users. Get the slug and kind from search_titles first. Filter with 'sentiment' to read only what praised or panned it, which Metacritic groups itself. Metacritic returns a fixed sample rather than the full list, so 'total_available' is usually far larger than what comes back, and there is no way to page past the sample. Critic reviews carry the publication and a link to the original article: quote them with both. Critic scores run to 100 and user scores to 10, so do not average the two together.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Identifier from search_titles, such as 'the-matrix'."
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["movie", "show", "game"],
+            "description": "Which catalogue the entry belongs to. Pass it back with the slug."
+          },
+          "source": {
+            "default": "critic",
+            "description": "'critic' is the professional press, 'user' is the audience.",
+            "type": "string",
+            "enum": ["critic", "user"]
+          },
+          "sentiment": {
+            "default": "all",
+            "description": "Which slice to read. Metacritic groups reviews this way itself.",
+            "type": "string",
+            "enum": ["all", "positive", "neutral", "negative"]
+          },
+          "limit": {
+            "default": 10,
+            "description": "How many reviews to return from the sample Metacritic publishes.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "offset": {
+            "default": 0,
+            "description": "How many of the sampled reviews to skip. The sample itself cannot be paged past.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": ["slug", "kind"],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string",
+            "description": "Metacritic page these reviews belong to. Cite it when an article link is missing."
+          },
+          "source": {
+            "type": "string"
+          },
+          "sentiment": {
+            "type": "string"
+          },
+          "reviews": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "quote": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Excerpt as published, truncated if long."
+                },
+                "score": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "max": {
+                  "type": "number",
+                  "description": "Scale for this review's score: 100 for critics, 10 for users."
+                },
+                "publication": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Who ran it. Name it when quoting."
+                },
+                "author": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "url": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Original article. Link it when quoting."
+                },
+                "date": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": ["quote", "score", "max", "publication", "author", "url", "date"],
+              "additionalProperties": false
+            }
+          },
+          "total_available": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "How many reviews Metacritic counts in total. Usually far more than it serves here."
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pass as 'offset' for the next page."
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "slug",
+          "kind",
+          "source_url",
+          "source",
+          "sentiment",
+          "reviews",
+          "total_available",
+          "offset",
+          "next_offset",
+          "notes"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "browse_titles",
+      "title": "Browse rankings",
+      "description": "List films, shows or games by score, by release date or by current popularity. Use this when there is no specific title to look up: best rated, newest, what people are looking at now. Filter by genre with a single name such as Horror, Comedy or Action. Sorting by score returns the all-time ranking, which is dominated by older titles: combine with a genre to narrow it. Scores come back on their own scales, 100 for critics and 10 for users. Paging is approximate: Metacritic does not order tied entries stably, so an entry can appear on two consecutive pages. Deduplicate by slug rather than counting rows.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "default": "movie",
+            "description": "Which catalogue to list.",
+            "type": "string",
+            "enum": ["movie", "show", "game"]
+          },
+          "sort": {
+            "default": "score",
+            "description": "'score' is the critic ranking, 'recent' is by release date, 'popular' is current attention.",
+            "type": "string",
+            "enum": ["score", "recent", "popular"]
+          },
+          "genre": {
+            "description": "Single genre name, such as Horror. Omit for all genres.",
+            "type": "string"
+          },
+          "limit": {
+            "default": 20,
+            "description": "How many rows to return.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "offset": {
+            "default": 0,
+            "description": "How many rows to skip, for paging.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "sort": {
+            "type": "string"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": ["movie", "show", "game"]
+                },
+                "title": {
+                  "type": "string"
+                },
+                "slug": {
+                  "type": "string",
+                  "description": "Identifier to pass to get_title and get_reviews, with 'kind'."
+                },
+                "year": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "release_date": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "rating": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Age rating as published, such as R or TV-MA."
+                },
+                "metascore": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Critic score, out of 100. Not comparable to user_score without rescaling."
+                },
+                "user_score": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Audience score, out of 10. Not comparable to metascore without rescaling."
+                },
+                "source_url": {
+                  "type": "string",
+                  "description": "Metacritic page. Show this when citing the entry."
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "title",
+                "slug",
+                "year",
+                "release_date",
+                "rating",
+                "metascore",
+                "user_score",
+                "source_url"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "total_available": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "How many entries match upstream, which is the size of what this samples."
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pass as 'offset' for the next page. Tied entries are not ordered stably upstream, so deduplicate by slug across pages."
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "sort",
+          "genre",
+          "results",
+          "total_available",
+          "offset",
+          "next_offset",
+          "notes"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    }
+  ],
+  "version": "2.0.1"
+}
