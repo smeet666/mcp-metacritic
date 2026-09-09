@@ -271,11 +271,21 @@ describe("get_title", () => {
     });
 
     const out = result.structuredContent;
-    expect(out.description, "description belongs to 'basic'").toBeNull();
-    expect(out.genres).toEqual([]);
-    expect(out.duration_minutes).toBeNull();
-    expect(out.imdb_id).toBeNull();
-    expect(out.total_chars).toBe(0);
+    // An empty list and a zero are statements about what Metacritic holds, and
+    // only a section that was asked for can make one.
+    for (const key of [
+      "description",
+      "tagline",
+      "genres",
+      "duration_minutes",
+      "imdb_id",
+      "total_chars",
+      "returned_chars",
+      "next_offset",
+      "truncated",
+    ]) {
+      expect(out, `${key} belongs to 'basic', which was not asked for`).not.toHaveProperty(key);
+    }
     expect(out.critic_score.score, "the section that was asked for is still served").toBe(73);
   });
 
@@ -547,8 +557,9 @@ describe("the text mirror", () => {
 
     const text = textOf(result);
     expect(text.length).toBeLessThanOrEqual(2000);
-    expect(text.endsWith("https://www.metacritic.com/movie/blue-horizon/")).toBe(true);
-    expect(text).toContain("Source: Metacritic");
+    expect(
+      text.endsWith("Source: Metacritic (https://www.metacritic.com/movie/blue-horizon/)"),
+    ).toBe(true);
   });
 
   it("carries the notes into the text, not only into the structured payload", async () => {

@@ -130,23 +130,30 @@ export const getTitleInput = strictInput({
 
 export const getTitleOutputShape = {
   title: titleSummarySchema,
-  description: z.string().nullable(),
-  tagline: z.string().nullable(),
-  genres: z.array(z.string()),
+  description: z.string().nullable().optional(),
+  tagline: z.string().nullable().optional(),
+  genres: z.array(z.string()).optional(),
   duration_minutes: z
     .number()
     .int()
     .nullable()
+    .optional()
     .describe("Runtime in minutes for a film, or the length of a typical episode for a show."),
   imdb_id: z
     .string()
     .nullable()
+    .optional()
     .describe("IMDb identifier, usable to cross-reference other sources."),
-  total_chars: z.number().int().describe("Length of the full description."),
-  returned_chars: z.number().int(),
+  total_chars: z.number().int().optional().describe("Length of the full description."),
+  returned_chars: z.number().int().optional(),
   offset: z.number().int(),
-  next_offset: z.number().int().nullable().describe("Pass as 'offset' to read the rest."),
-  truncated: z.boolean(),
+  next_offset: z
+    .number()
+    .int()
+    .nullable()
+    .optional()
+    .describe("Pass as 'offset' to read the rest."),
+  truncated: z.boolean().optional(),
   critic_score: scoreSchema.nullable(),
   user_score: scoreSchema.nullable(),
   awards: z
@@ -210,22 +217,31 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
       }),
     );
 
+    // A section left out carries no key at all: an empty list or a zero states
+    // that Metacritic holds none, and only a section that was asked for can
+    // make that statement.
+    const entry = basic
+      ? {
+          description: slice === "" ? null : slice,
+          tagline: item.tagline,
+          genres: item.genres,
+          duration_minutes: item.duration,
+          imdb_id: item.imdbId,
+          total_chars: full.length,
+          returned_chars: slice.length,
+          next_offset: nextOffset,
+          truncated: nextOffset !== null,
+        }
+      : {};
+
     const structured: Record<string, unknown> = {
       title: {
         ...toTitleSummaryOut(item),
         metascore: criticScore?.score ?? item.metascore,
         user_score: userScore?.score ?? null,
       },
-      description: basic && slice !== "" ? slice : null,
-      tagline: basic ? item.tagline : null,
-      genres: basic ? item.genres : [],
-      duration_minutes: basic ? item.duration : null,
-      imdb_id: basic ? item.imdbId : null,
-      total_chars: basic ? full.length : 0,
-      returned_chars: basic ? slice.length : 0,
+      ...entry,
       offset: args.offset,
-      next_offset: basic ? nextOffset : null,
-      truncated: basic && nextOffset !== null,
       critic_score: criticScore ? toScoreOut(criticScore) : null,
       user_score: userScore ? toScoreOut(userScore) : null,
       notes,

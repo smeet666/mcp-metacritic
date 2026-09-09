@@ -58,7 +58,7 @@ describe("ok()", () => {
     const text = textOf(ok({}, longBody(10_000), { sourceUrl }));
 
     expect(text.length).toBeLessThanOrEqual(MAX_TEXT_MIRROR_CHARS);
-    expect(text.endsWith(`${ATTRIBUTION} — ${sourceUrl}`)).toBe(true);
+    expect(text.endsWith(`${ATTRIBUTION} (${sourceUrl})`)).toBe(true);
   });
 
   it("carries the notes into the text, since they are what qualifies the answer", () => {

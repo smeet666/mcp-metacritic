@@ -279,6 +279,50 @@ describe("the settings", () => {
   });
 });
 
+describe("the privacy notice", () => {
+  const privacy = readFileSync(join(ROOT, "PRIVACY.md"), "utf8");
+  const hosts = [...privacy.matchAll(/^\*\*(\d+) h[^\s*]+[^*]*\*\*/gm)].map((found) =>
+    Number(found[1]),
+  );
+
+  it("states the same number of hosts in both halves", () => {
+    expect(hosts.length, "each half opens its host table with a count").toBe(2);
+    expect(hosts[0], "the two halves of one document cannot disagree").toBe(hosts[1]);
+  });
+
+  it("counts the hosts a request is actually sent to", () => {
+    const paths = readFileSync(join(ROOT, "src", "mc", "paths.ts"), "utf8");
+    const reached = new Set(
+      [...paths.matchAll(/API_BASE\s*=\s*"https:\/\/([^/"]+)/g)].map((found) => found[1]),
+    );
+
+    expect(hosts[0], "a host named in a link is not a host that is contacted").toBe(reached.size);
+  });
+});
+
+describe("the library example", () => {
+  const clientSource = readFileSync(join(ROOT, "src", "mc", "client.ts"), "utf8");
+  const exposed = new Set(
+    [...clientSource.matchAll(/^ {2}(?:async )?([a-zA-Z][a-zA-Z0-9]*)\s*\(/gm)].map(
+      (found) => found[1],
+    ),
+  );
+
+  it("calls methods the published client exposes", () => {
+    const called = [...readme.matchAll(/\bclient\.([a-zA-Z][a-zA-Z0-9]*)\s*\(/g)].map(
+      (found) => found[1],
+    );
+
+    expect(called.length, "the README shows the client being used").toBeGreaterThan(0);
+    for (const method of called) {
+      expect(
+        exposed.has(method),
+        `README.md calls client.${method}(), which McClient does not expose`,
+      ).toBe(true);
+    }
+  });
+});
+
 describe("the wording", () => {
   it("carries none of the turns of phrase this project refuses", () => {
     for (const [pattern, what] of REFUSED_WORDING) {

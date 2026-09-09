@@ -223,7 +223,7 @@ and its errors, and with no protocol attached.
 import { McClient } from "mcp-metacritic/client";
 
 const client = new McClient();
-const { data, cached } = await client.getTitle({ slug: "the-matrix", kind: "movie" });
+const { data, cached } = await client.getDetail("movie", "the-matrix");
 console.log(data.title, data.metascore, cached);
 ```
 
@@ -495,7 +495,7 @@ erreurs, sans protocole attaché.
 import { McClient } from "mcp-metacritic/client";
 
 const client = new McClient();
-const { data, cached } = await client.getTitle({ slug: "the-matrix", kind: "movie" });
+const { data, cached } = await client.getDetail("movie", "the-matrix");
 console.log(data.title, data.metascore, cached);
 ```
 

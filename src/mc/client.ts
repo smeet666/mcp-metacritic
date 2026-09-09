@@ -37,9 +37,6 @@ import type { SORT_BY } from "./paths.js";
 import { RateLimiter } from "./rateLimiter.js";
 import { browseUrl, detailUrl, reviewsUrl, scoreUrl, searchUrl, watchUrl } from "./urls.js";
 
-/** The names a User-Agent carries when it passes traffic off as a browser. */
-const BROWSER_IDENTITY = /mozilla\/|applewebkit|chrome\/|safari\/|gecko/i;
-
 export interface McClientOptions {
   config?: Config;
   logger?: Logger;
@@ -64,13 +61,13 @@ export type Sort = keyof typeof SORT_BY;
  * reading a source that publishes no terms, so they hold on every path.
  *
  * A caller may still name their own application in the User-Agent, and there
- * are good reasons to. Passing the traffic off as a browser is a different
- * thing, and gets the project's own identity appended so it stays attributable.
+ * are good reasons to. The project's own identity is appended behind theirs, so
+ * the site always holds an address where a person can be reached.
  */
 function withGuarantees(config: Config): Config {
-  const userAgent = BROWSER_IDENTITY.test(config.userAgent)
-    ? `${config.userAgent} ${DEFAULT_USER_AGENT}`
-    : config.userAgent;
+  const userAgent = config.userAgent.includes(DEFAULT_USER_AGENT)
+    ? config.userAgent
+    : `${config.userAgent} ${DEFAULT_USER_AGENT}`;
   return {
     ...config,
     userAgent,

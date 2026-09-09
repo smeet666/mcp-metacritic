@@ -16,12 +16,14 @@ It needs no API key and no account, so there is no credential for it to hold and
 
 ## What leaves your machine, and where it goes
 
-**2 hosts are contacted**, and nothing else.
+**1 host is contacted**, and nothing else.
 
 | Host                     | What is read there |
 | ------------------------ | ------------------ |
-| `www.metacritic.com`     | the site's pages   |
 | `backend.metacritic.com` | the site's own API |
+
+`www.metacritic.com` appears in the links an answer carries, so a reader can open
+the entry on the site. No request is sent there.
 
 What a request carries:
 
@@ -91,12 +93,14 @@ Il ne demande ni clé d'API ni compte, donc il ne détient aucun identifiant et 
 
 ## Ce qui quitte votre machine, et où cela va
 
-**2 hôtes sont joints**, et rien d'autre.
+**1 hôte est joint**, et rien d'autre.
 
-| Hôte                     | Ce qui y est lu   |
-| ------------------------ | ----------------- |
-| `www.metacritic.com`     | les pages du site |
-| `backend.metacritic.com` | l'API du site     |
+| Hôte                     | Ce qui y est lu |
+| ------------------------ | --------------- |
+| `backend.metacritic.com` | l'API du site   |
+
+`www.metacritic.com` figure dans les liens que porte une réponse, pour qu'un
+lecteur ouvre la fiche sur le site. Aucune requête n'y est envoyée.
 
 Ce qu'une requête emporte :
 

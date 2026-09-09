@@ -121,7 +121,7 @@ export function ok(
   body: string,
   options: { notes?: string[]; sourceUrl?: string } = {},
 ): ToolResult {
-  const attribution = options.sourceUrl ? `${ATTRIBUTION} — ${options.sourceUrl}` : ATTRIBUTION;
+  const attribution = options.sourceUrl ? `${ATTRIBUTION} (${options.sourceUrl})` : ATTRIBUTION;
   // A run of notes must never crowd out the answer they qualify, so they are
   // dropped from the tail until the body keeps a readable share of the block.
   const noteLines = (options.notes ?? []).map((note) => `Note: ${note}`);

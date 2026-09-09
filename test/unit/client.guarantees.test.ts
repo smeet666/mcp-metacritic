@@ -39,7 +39,7 @@ describe("the User-Agent this client sends", () => {
     expect(userAgentOf(fetch)).toBe(DEFAULT_USER_AGENT);
   });
 
-  it("lets a caller name their own application", async () => {
+  it("lets a caller name their own application, and stays reachable behind it", async () => {
     const fetch = happyRouter();
     await new McClient({
       config: testConfig({ userAgent: "acme-research/2.0 (+https://acme.example)" }),
@@ -47,10 +47,14 @@ describe("the User-Agent this client sends", () => {
       fetchImpl: fetch.impl,
     }).search("blue horizon", 10, 0);
 
-    expect(userAgentOf(fetch)).toBe("acme-research/2.0 (+https://acme.example)");
+    const sent = userAgentOf(fetch);
+    expect(sent.startsWith("acme-research/2.0 (+https://acme.example)")).toBe(true);
+    expect(sent, "the site keeps an address where a person can be reached").toContain(
+      DEFAULT_USER_AGENT,
+    );
   });
 
-  it("stays attributable when a caller passes a browser's User-Agent off as its own", async () => {
+  it("keeps a browser User-Agent attributable by naming this project alongside", async () => {
     const fetch = happyRouter();
     await new McClient({
       config: testConfig({ userAgent: CHROME }),
@@ -63,7 +67,7 @@ describe("the User-Agent this client sends", () => {
     expect(sent, "and this project is named alongside it").toContain(DEFAULT_USER_AGENT);
   });
 
-  it("catches the other browser spellings too", async () => {
+  it("names this project behind whatever string a caller hands it", async () => {
     for (const disguise of [
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
       "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0",
