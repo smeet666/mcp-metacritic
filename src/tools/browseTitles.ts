@@ -93,7 +93,10 @@ export async function runBrowseTitles(
       offset: args.offset,
     });
 
-    const results = data.titles.map(toTitleSummaryOut);
+    // Metacritic sizes its own page and answers a request for three rows with as
+    // many as it cares to send. A caller who asked for three and reads twenty is
+    // paying for seventeen it did not want.
+    const results = data.titles.slice(0, args.limit).map(toTitleSummaryOut);
     const notes: string[] = [];
     if (cached) {
       notes.push("Served from this server's short-lived in-memory cache.");
@@ -112,8 +115,11 @@ export async function runBrowseTitles(
     }
 
     // A short page is the end-of-list signal, judged on what the site sent
-    // rather than on what could be read, since its offset counts entries.
-    const nextOffset = data.itemCount < args.limit ? null : args.offset + data.itemCount;
+    // rather than on what could be read, since its offset counts entries. Paging
+    // resumes where the caller stopped reading, which is the number of rows it
+    // asked for: advancing by what the site sent would step over the rows it
+    // sent past that and nobody read.
+    const nextOffset = data.itemCount < args.limit ? null : args.offset + args.limit;
 
     const heading = [
       args.genre ? `${args.genre} ` : "",

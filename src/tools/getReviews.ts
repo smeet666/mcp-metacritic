@@ -51,15 +51,39 @@ export const getReviewsInput = strictInput({
     .describe("How many of the sampled reviews to skip. The sample itself cannot be paged past."),
 });
 
-const reviewSchema = z.object({
+/** The three fields a critic's review carries and a viewer's does not. */
+interface CreditedReview {
+  publication: string | null;
+  author: string | null;
+  url: string | null;
+}
+
+/** What both kinds of review carry, whoever wrote them. */
+const saidSchema = {
   quote: z.string().nullable().describe("Excerpt as published, truncated if long."),
   score: z.number().nullable(),
   max: z.number().describe("Scale for this review's score: 100 for critics, 10 for users."),
+  date: z.string().nullable(),
+};
+
+/**
+ * The two shapes this tool answers with, declared apart.
+ *
+ * Metacritic publishes a critic's review with the outlet that ran it and a link
+ * to the article, and a viewer's review with none of that. One schema covering
+ * both puts three keys on every viewer's review whose null reads as a viewer
+ * nobody credited, where the site holds no such field at all.
+ */
+const criticReviewSchema = z.object({
+  ...saidSchema,
   publication: z.string().nullable().describe("Who ran it. Name it when quoting."),
   author: z.string().nullable(),
   url: z.string().nullable().describe("Original article. Link it when quoting."),
-  date: z.string().nullable(),
 });
+
+const userReviewSchema = z.object(saidSchema);
+
+const reviewSchema = z.union([criticReviewSchema, userReviewSchema]);
 
 export const getReviewsOutputShape = {
   slug: z.string(),
@@ -112,15 +136,29 @@ export async function runGetReviews(client: McClient, args: GetReviewsArgs): Pro
     // would spend a request and change nothing.
     const sampled = data.reviews.slice(args.offset, args.offset + args.limit);
 
-    const reviews = sampled.map((review) => ({
-      quote: review.quote === null ? null : truncate(review.quote, MAX_QUOTE_CHARS),
-      score: review.score,
-      max,
-      publication: "publication" in review ? review.publication : null,
-      author: "author" in review ? review.author : null,
-      url: "url" in review ? review.url : null,
-      date: review.date,
-    }));
+    // A viewer's review carries no outlet and no article, so it carries no key
+    // for either. The three are attached where the site publishes them, which is
+    // the source that was asked for.
+    const credits = (review: (typeof sampled)[number]): CreditedReview | null =>
+      "publication" in review ? (review as unknown as CreditedReview) : null;
+
+    const reviews = sampled.map((review) => {
+      const said = {
+        quote: review.quote === null ? null : truncate(review.quote, MAX_QUOTE_CHARS),
+        score: review.score,
+        max,
+        date: review.date,
+      };
+      const credited = credits(review);
+      return credited === null
+        ? said
+        : {
+            ...said,
+            publication: credited.publication,
+            author: credited.author,
+            url: credited.url,
+          };
+    });
 
     const notes: string[] = [];
     if (cached) {
@@ -161,7 +199,8 @@ export async function runGetReviews(client: McClient, args: GetReviewsArgs): Pro
 
     const listing = reviews
       .map((review, index) => {
-        const who = [review.publication, review.author].filter(Boolean).join(", ");
+        const credited = credits(sampled[index] as (typeof sampled)[number]);
+        const who = [credited?.publication, credited?.author].filter(Boolean).join(", ");
         const head = `${index + 1}. ${review.score === null ? "" : `${review.score}/${max} `}${who || "anonymous"}`;
         // Quotes are third-party writing and can contain blank lines, which
         // would otherwise sit flush against the server's own trailing lines and
@@ -171,7 +210,7 @@ export async function runGetReviews(client: McClient, args: GetReviewsArgs): Pro
           .split("\n")
           .map((line) => `   ${line}`)
           .join("\n");
-        return `${head}\n${quoted}\n   ${review.url ?? sourceUrl}`;
+        return `${head}\n${quoted}\n   ${credited?.url ?? sourceUrl}`;
       })
       .join("\n");
 
