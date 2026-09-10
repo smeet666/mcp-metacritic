@@ -3,7 +3,7 @@ import { defineConfig } from "tsup";
 /**
  * The build that goes into the .mcpb bundle.
  *
- * A bundle is installed by unpacking it, not by resolving a package, so nothing
+ * A bundle is installed by unpacking it, so it resolves no package and nothing
  * can stay external: the dependencies are compiled into the one file that
  * ships. The npm build keeps them external, so a consumer's own copies win
  * there; the two configurations exist for that reason and must not be merged.

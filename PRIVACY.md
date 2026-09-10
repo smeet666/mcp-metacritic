@@ -30,7 +30,7 @@ What a request carries:
 | What                   | Why it is there                                                                                                                         |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | The question you asked | A search term or an identifier reaches the site as you wrote it.                                                                        |
-| A `User-Agent`         | `mcp-metacritic/<version> (+https://github.com/smeet666/mcp-metacritic)`, so the site can reach a person about the traffic it receives. |
+| A `User-Agent`         | `mcp-metacritic v<version> (https://github.com/smeet666/mcp-metacritic)`, so the site can reach a person about the traffic it receives. |
 | Your IP address        | Sent by your network to any host you contact, as with any web request.                                                                  |
 
 Your requests reach Metacritic. What is done with them there is governed by that site's own privacy policy, which this project does not control.
@@ -58,11 +58,12 @@ becomes of them. `MC_LOG_LEVEL` governs how much is written and defaults to `err
 
 ## The settings that change any of this
 
-| Variable          | What it changes                                                                                                  |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `MC_USER_AGENT`   | Adds your own identifier in front of this project's, which stays appended so the site can always reach a person. |
-| `MC_CACHE_TTL_MS` | How long an answer is held in memory. `0` turns the cache off.                                                   |
-| `MC_LOG_LEVEL`    | How much is written to stderr.                                                                                   |
+| Variable                 | What it changes                                                                                                  |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `MC_USER_AGENT`          | Adds your own identifier in front of this project's, which stays appended so the site can always reach a person. |
+| `MC_CACHE_TTL_MS`        | How long a catalogue answer is held in memory. `0` turns that cache off.                                         |
+| `MC_SCORES_CACHE_TTL_MS` | How long a score or a review is held, which moves as reviews come in and so has a lifetime of its own.           |
+| `MC_LOG_LEVEL`           | How much is written to stderr.                                                                                   |
 
 ## Children
 
@@ -107,7 +108,7 @@ Ce qu'une requête emporte :
 | Quoi              | Pourquoi                                                                                                                                                |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | La question posée | Un terme de recherche ou un identifiant atteint le site tel que vous l'avez écrit.                                                                      |
-| Un `User-Agent`   | `mcp-metacritic/<version> (+https://github.com/smeet666/mcp-metacritic)`, pour que le site puisse joindre une personne au sujet du trafic qu'il reçoit. |
+| Un `User-Agent`   | `mcp-metacritic v<version> (https://github.com/smeet666/mcp-metacritic)`, pour que le site puisse joindre une personne au sujet du trafic qu'il reçoit. |
 | Votre adresse IP  | Transmise par votre réseau à tout hôte que vous joignez, comme pour n'importe quelle requête web.                                                       |
 
 Vos requêtes atteignent Metacritic. Ce qui en est fait là-bas relève de la politique de confidentialité de ce site, que ce projet ne contrôle pas.
@@ -137,11 +138,12 @@ qu'ils deviennent. `MC_LOG_LEVEL` règle leur quantité et vaut `error` par déf
 
 ## Les réglages qui changent tout cela
 
-| Variable          | Ce qu'elle change                                                                                                        |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `MC_USER_AGENT`   | Ajoute votre identifiant devant celui du projet, qui reste accolé pour que le site puisse toujours joindre une personne. |
-| `MC_CACHE_TTL_MS` | Combien de temps une réponse est gardée en mémoire. `0` éteint le cache.                                                 |
-| `MC_LOG_LEVEL`    | La quantité écrite sur stderr.                                                                                           |
+| Variable                 | Ce qu'elle change                                                                                                            |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `MC_USER_AGENT`          | Ajoute votre identifiant devant celui du projet, qui reste accolé pour que le site puisse toujours joindre une personne.     |
+| `MC_CACHE_TTL_MS`        | Combien de temps une réponse de catalogue est gardée en mémoire. `0` éteint ce cache.                                        |
+| `MC_SCORES_CACHE_TTL_MS` | Combien de temps une note ou une critique est gardée, ce qui bouge à mesure que les avis arrivent et a donc sa propre durée. |
+| `MC_LOG_LEVEL`           | La quantité écrite sur stderr.                                                                                               |
 
 ## Les enfants
 

@@ -21,8 +21,8 @@ What remains is worth reporting:
 
 - **Anything that lets a caller reach a host other than Metacritic.** The URLs are
   built from a fixed base; an argument that escapes it is a real finding.
-- **Anything upstream text can do to the caller.** Titles, quotes and lyrics
-  come from a third party and end up in front of a model. A path by which that
+- **Anything upstream text can do to the caller.** Titles, taglines and review
+  quotes come from a third party and end up in front of a model. A path by which that
   text could be read as instructions rather than as content is in scope, and so
   is anything that could make it look like the server's own words.
 - **Anything that turns a failure into a confident answer.** A crafted response

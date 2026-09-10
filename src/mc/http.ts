@@ -36,8 +36,8 @@ export interface HttpDeps {
  *
  * Three outcomes and no fourth: the body is usable, the thing asked for is not
  * there, or the edge is refusing for now. Two of those refusals arrive under a
- * success status — an empty body, and HTML where JSON belongs — and reading
- * them as answers hands the parser a document that reads as "nothing found".
+ * success status (an empty body, and HTML where JSON belongs), and reading them
+ * as answers hands the parser a document that reads as "nothing found".
  */
 type Answer =
   | { kind: "usable" }

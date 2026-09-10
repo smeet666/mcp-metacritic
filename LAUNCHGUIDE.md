@@ -50,10 +50,10 @@ Content & Media
 - "How was Dune Part Two received by critics?"
 - "What did reviewers dislike about Cyberpunk 2077 at launch?"
 - "What are the best rated horror films of all time?"
-- Tool: search_titles — Finds an entry and its slug and kind, with the critic Metascore
-- Tool: get_title — Reads one entry, only the sections you ask for
-- Tool: get_reviews — Reads individual critic or user reviews
-- Tool: browse_titles — Lists rankings by score, recency or popularity
+- Tool: search_titles: Finds an entry and its slug and kind, with the critic Metascore
+- Tool: get_title: Reads one entry, only the sections you ask for
+- Tool: get_reviews: Reads individual critic or user reviews
+- Tool: browse_titles: Lists rankings by score, recency or popularity
 
 ## Tags
 

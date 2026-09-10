@@ -1,9 +1,9 @@
 /**
  * In-memory TTL + LRU cache.
  *
- * Nothing is written to disk. The cache exists so that repeated questions about
- * the same title inside one conversation do not hit Metacritic again, not to
- * build a local copy of their catalogue.
+ * Nothing is written to disk. The cache holds an answer for as long as one
+ * conversation is likely to ask about the same title, so the second question
+ * about it costs the site nothing.
  *
  * A Map iterates in insertion order, so re-inserting on every hit is enough to
  * make the first key the least recently used one.

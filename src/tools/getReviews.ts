@@ -1,9 +1,9 @@
 /**
  * get_reviews: what individual critics and viewers wrote.
  *
- * The aggregate score is available everywhere. The individual verdicts, with
- * the publication that ran them and a link to the original article, are what
- * this source has and others do not.
+ * The aggregate score answers how a title landed. The individual verdicts
+ * answer who said what: the publication that ran each one, its wording, and a
+ * link to the article it came from.
  */
 
 import { z } from "zod";
