@@ -197,8 +197,14 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
     let userScore: ScoreSummary | null = null;
     if (wanted.has("scores")) {
       [criticScore, userScore] = await Promise.all([
-        optionalScore(client, args.kind, args.slug, "critic", notes, item.metascore),
-        optionalScore(client, args.kind, args.slug, "user", notes, item.userScore),
+        optionalScore(client, args.kind, args.slug, "critic", {
+          notes,
+          onEntryPage: item.metascore,
+        }),
+        optionalScore(client, args.kind, args.slug, "user", {
+          notes,
+          onEntryPage: item.userScore,
+        }),
       ]);
     }
 
@@ -289,9 +295,9 @@ async function optionalScore(
   kind: Kind,
   slug: string,
   source: "critic" | "user",
-  notes: string[],
-  onEntryPage: number | null,
+  said: { notes: string[]; onEntryPage: number | null },
 ): Promise<ScoreSummary | null> {
+  const { notes, onEntryPage } = said;
   try {
     const { data } = await client.getScore(kind, slug, source);
     return data;

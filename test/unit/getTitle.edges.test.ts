@@ -35,7 +35,7 @@ async function connectTo(
   detail: string,
   over: { offers?: string; failing?: string; status?: number } = {},
 ): Promise<Client> {
-  const routes: Array<[string, string]> = [
+  const routes: [string, string][] = [
     [ROUTE.detailMovie, detail],
     [ROUTE.criticScore, fixtureText("score-critic.json")],
     [ROUTE.userScore, fixtureText("score-user.json")],
