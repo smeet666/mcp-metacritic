@@ -160,8 +160,12 @@ export function toToolError(error: unknown): ToolResult {
   if (known.details.hint) {
     lines.push(`Hint: ${known.details.hint}`);
   }
+  // An error message can quote what the site itself reported, so it passes the
+  // same two guards a body does: a quoted line cannot open a marker of its own,
+  // and no message crowds out the block it arrives in.
+  const safe = truncate(indentMarkerLines(lines.join("\n")), MAX_TEXT_MIRROR_CHARS);
 
-  return { content: [{ type: "text", text: lines.join("\n") }], isError: true };
+  return { content: [{ type: "text", text: safe }], isError: true };
 }
 
 export function truncate(text: string, maxChars: number): string {

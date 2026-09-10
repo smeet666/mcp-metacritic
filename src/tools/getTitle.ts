@@ -197,8 +197,14 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
     let userScore: ScoreSummary | null = null;
     if (wanted.has("scores")) {
       [criticScore, userScore] = await Promise.all([
-        optionalScore(client, args.kind, args.slug, "critic", notes),
-        optionalScore(client, args.kind, args.slug, "user", notes),
+        optionalScore(client, args.kind, args.slug, "critic", {
+          notes,
+          onEntryPage: item.metascore,
+        }),
+        optionalScore(client, args.kind, args.slug, "user", {
+          notes,
+          onEntryPage: item.userScore,
+        }),
       ]);
     }
 
@@ -250,8 +256,10 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
     const production = attachAskedSections(structured, item, wanted, notes);
     const offers = wanted.has("where_to_watch")
       ? await watchOffers(client, item, args.kind, notes)
-      : [];
-    if (wanted.has("where_to_watch")) {
+      : null;
+    // A read that failed carries no key: an empty list states Metacritic lists
+    // no offer, and only a read that reached the route can state that.
+    if (offers !== null) {
       structured.where_to_watch = offers;
     }
 
@@ -260,7 +268,8 @@ export async function runGetTitle(client: McClient, args: GetTitleArgs): Promise
       render(item, slice, wanted, {
         critic: criticScore,
         user: userScore,
-        offers,
+        offers: offers ?? [],
+        offersRead: offers !== null,
         production,
       }),
       {
@@ -286,14 +295,22 @@ async function optionalScore(
   kind: Kind,
   slug: string,
   source: "critic" | "user",
-  notes: string[],
+  said: { notes: string[]; onEntryPage: number | null },
 ): Promise<ScoreSummary | null> {
+  const { notes, onEntryPage } = said;
   try {
     const { data } = await client.getScore(kind, slug, source);
     return data;
   } catch (error) {
     if (error instanceof McError && error.code === "not_found") {
-      notes.push(`Metacritic publishes no ${source} score for this entry.`);
+      // The entry page carries the bare number, and the score route carries the
+      // breakdown behind it. Calling the score absent while the payload
+      // publishes that number would state both at once.
+      notes.push(
+        onEntryPage === null
+          ? `Metacritic publishes no ${source} score for this entry.`
+          : `Metacritic publishes no ${source} score breakdown for this entry, so the number stands without the review counts behind it.`,
+      );
     } else {
       const reason = error instanceof McError ? error.code : "an unexpected error";
       notes.push(
@@ -309,7 +326,7 @@ async function watchOffers(
   item: TitleDetail,
   kind: Kind,
   notes: string[],
-): Promise<WatchOffer[]> {
+): Promise<WatchOffer[] | null> {
   if (kind === "game") {
     notes.push("Streaming offers do not apply to games.");
     return [];
@@ -322,8 +339,10 @@ async function watchOffers(
     const { data } = await client.getWatchOffers(item.imdbId, kind);
     return data;
   } catch {
-    notes.push("Streaming offers could not be read for this entry.");
-    return [];
+    notes.push(
+      "Streaming offers could not be read for this entry, so they are missing here rather than absent from Metacritic. Call again to retry.",
+    );
+    return null;
   }
 }
 
@@ -367,6 +386,7 @@ function renderAskedSections(
   item: TitleDetail,
   wanted: Set<Section>,
   offers: WatchOffer[],
+  offersRead: boolean,
   production: Array<{ name: string }>,
 ): string[] {
   const lines: string[] = [];
@@ -386,10 +406,10 @@ function renderAskedSections(
     );
   }
 
-  if (wanted.has("where_to_watch")) {
+  if (wanted.has("where_to_watch") && offersRead) {
     lines.push("", offers.length === 0 ? "Where to watch: nothing listed." : "Where to watch:");
     for (const o of offers) {
-      lines.push(`  ${o.provider} (${o.kind})${o.url ? ` — ${o.url}` : ""}`);
+      lines.push(`  ${o.provider} (${o.kind})${o.url ? `: ${o.url}` : ""}`);
     }
   }
 
@@ -404,10 +424,12 @@ function render(
     critic: ScoreSummary | null;
     user: ScoreSummary | null;
     offers: WatchOffer[];
+    /** False when the offers route could not be read, which lists nothing. */
+    offersRead: boolean;
     production: Array<{ name: string }>;
   },
 ): string {
-  const { critic, user, offers, production } = said;
+  const { critic, user, offers, offersRead, production } = said;
   // Some titles already carry their year, so it is only appended when absent.
   const yearShown = item.year !== null && !item.title.includes(`(${item.year})`);
   const header = [item.title, yearShown ? `(${item.year})` : "", `· ${item.kind}`]
@@ -437,7 +459,7 @@ function render(
     lines.push("", description);
   }
 
-  lines.push(...renderAskedSections(item, wanted, offers, production));
+  lines.push(...renderAskedSections(item, wanted, offers, offersRead, production));
 
   return lines.join("\n");
 }

@@ -247,7 +247,7 @@ function toStringList(value: unknown): string[] {
  * Awards are reported one entry per ceremony, as a tally rather than a list of
  * individual prizes. A ceremony where nothing was won carries `wins: null`, so
  * that is preserved instead of being flattened to zero: "no win recorded" and
- * "zero wins" are the same here, but only the source can say which it meant.
+ * "zero wins" are different statements, and only the source can make either.
  */
 function toAwards(value: unknown): Award[] {
   if (!Array.isArray(value)) {
@@ -296,7 +296,7 @@ export function parseDetail(raw: string, url: string, kind: Kind, slug: string):
     year: intOf(item.premiereYear),
     releaseDate: str(item.releaseDate),
     rating: str(item.rating),
-    metascore: num(critic.score),
+    metascore: aggregate(critic.score),
     userScore: null,
     sourceUrl: titlePageUrl(kind, slug),
     description: str(item.description),
