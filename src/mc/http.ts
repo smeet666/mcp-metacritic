@@ -17,6 +17,14 @@ import { type RateLimiter, sleep } from "./rateLimiter.js";
 const BACKOFF_BASE_MS = 2000;
 const BACKOFF_FACTOR = 2;
 const BACKOFF_MAX_MS = 20_000;
+/**
+ * The largest body this server reads.
+ *
+ * The routes answer in tens of kilobytes, and a body an order of magnitude past
+ * that is a page this server has no reading for. Holding it in memory to find
+ * that out costs the caller the memory and the site the transfer.
+ */
+const MAX_BODY_BYTES = 8_000_000;
 
 /** Exponential backoff with jitter, so parallel clients do not resynchronise. */
 export function backoffDelay(attempt: number, random: () => number = Math.random): number {
@@ -43,6 +51,32 @@ type Answer =
   | { kind: "usable" }
   | { kind: "refused"; error: McError }
   | { kind: "again"; error: McError; waitMs: number | null; penalise: boolean; because: string };
+
+/**
+ * The body, when it is a size this server has a reading for.
+ *
+ * The declared length is checked first, so a page an order of magnitude past
+ * what these routes answer with is refused before it is held in memory. A
+ * response declaring nothing is measured once it has arrived, which bounds what
+ * a parser is handed.
+ */
+async function readBounded(response: Response, url: string): Promise<string> {
+  const declared = Number(response.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
+    throw parseFailure(
+      url,
+      `the response declares ${declared} bytes, past the ${MAX_BODY_BYTES} this server reads`,
+    );
+  }
+  const body = await response.text();
+  if (body.length > MAX_BODY_BYTES) {
+    throw parseFailure(
+      url,
+      `the response carries more than the ${MAX_BODY_BYTES} bytes this server reads`,
+    );
+  }
+  return body;
+}
 
 function readAnswer(
   url: string,
@@ -131,10 +165,13 @@ export async function fetchText(url: string, deps: HttpDeps): Promise<string> {
 
     for (let attempt = 0; attempt <= config.maxRetries; attempt += 1) {
       if (attempt > 0) {
-        const delay = askedWaitMs ?? backoffDelay(attempt - 1);
+        // The ceiling bounds a delay this server chose. A site that says when to
+        // come back has named the one thing it asked of this client, and cutting
+        // that wait comes back early on its instruction.
+        const delay = askedWaitMs ?? Math.min(backoffDelay(attempt - 1), BACKOFF_MAX_MS);
         askedWaitMs = null;
         logger.info(`retry ${attempt}/${config.maxRetries} in ${delay}ms for ${url}`);
-        await sleep(Math.min(delay, BACKOFF_MAX_MS));
+        await sleep(delay);
       }
 
       let status: number;
@@ -152,7 +189,7 @@ export async function fetchText(url: string, deps: HttpDeps): Promise<string> {
         });
         status = response.status;
         retryAfterMs = parseRetryAfter(response.headers.get("retry-after"));
-        body = await response.text();
+        body = await readBounded(response, url);
       } catch (error) {
         lastError = asTransportError(error, url);
         logger.debug(`${lastError.code} for ${url}: ${lastError.message}`);
