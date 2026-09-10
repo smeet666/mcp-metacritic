@@ -81,6 +81,31 @@ const str = (value: unknown): string | null => {
   return trimmed === "" ? null : trimmed;
 };
 
+/**
+ * A field the site publishes that this server renders on a line of its own.
+ *
+ * A title, a publication or an author name sits inside a line the server wrote,
+ * so a line break in one of them opens a line the reader attributes to the
+ * server: "2. 100/100" under a numbered listing reads as another entry. The
+ * words are kept and the breaks become spaces, since the structured output
+ * carries the field exactly as it was published.
+ */
+const line = (value: unknown): string | null => {
+  const text = str(value);
+  return text === null ? null : text.replace(/\s*[\r\n]+\s*/g, " ");
+};
+
+/**
+ * A link this server hands a reader to open.
+ *
+ * Only http and https are handed on. A page is free to publish any scheme, and
+ * one a browser executes has no business in a block a model reads as a source.
+ */
+const link = (value: unknown): string | null => {
+  const text = str(value);
+  return text !== null && ABSOLUTE_URL.test(text) ? text : null;
+};
+
 const num = (value: unknown): number | null => {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;
@@ -139,8 +164,8 @@ function toSummary(node: unknown): TitleSummary | null {
   }
 
   const id = intOf(node.id);
-  const slug = str(node.slug);
-  const title = str(node.title);
+  const slug = line(node.slug);
+  const title = line(node.title);
   const kind = kindOf(node.type);
   if (id === null || !slug || !title || !kind) {
     return null;
@@ -281,7 +306,7 @@ export function parseDetail(raw: string, url: string, kind: Kind, slug: string):
   // The detail route omits `type`, so the kind comes from the caller, who chose
   // the route. Building the summary by hand keeps that difference explicit.
   const id = intOf(item.id);
-  const title = str(item.title);
+  const title = line(item.title);
   if (id === null || !title) {
     throw parseFailure(url, "the entry has no id or no title");
   }
@@ -372,7 +397,7 @@ export function parseCriticReviews(
       continue;
     }
     const quote = str(node.quote);
-    const publication = str(node.publicationName);
+    const publication = line(node.publicationName);
     // A quote with no publication cannot be attributed, and attribution is the
     // condition under which this content is worth passing on at all.
     if (!(quote && publication)) {
@@ -382,8 +407,8 @@ export function parseCriticReviews(
       quote,
       score: num(node.score),
       publication,
-      author: str(node.author),
-      url: str(node.url),
+      author: line(node.author),
+      url: link(node.url),
       date: str(node.date),
     });
   }
@@ -439,19 +464,20 @@ export function parseUserReviews(
  * Nine offers on one film came to 7 KB of redirects against 300 bytes of actual
  * links, so the destination is extracted and the wrapper dropped.
  */
-function unwrapLink(link: string | null): string | null {
-  if (!link) {
+function unwrapLink(wrapper: string | null): string | null {
+  if (!wrapper) {
     return null;
   }
   try {
-    const target = new URL(link).searchParams.get("r");
+    const target = new URL(wrapper).searchParams.get("r");
     if (target && ABSOLUTE_URL.test(target)) {
       return target;
     }
   } catch {
-    // Not a URL this function understands; the original is still usable.
+    // Not a URL this function understands, so the original stands or falls on
+    // the same test as an extracted destination.
   }
-  return link;
+  return ABSOLUTE_URL.test(wrapper) ? wrapper : null;
 }
 
 /** Streaming offers, grouped upstream by how you pay for them. */
@@ -471,7 +497,7 @@ export function parseOffers(raw: string, url: string, what: string): WatchOffer[
       if (!isObject(node)) {
         continue;
       }
-      const provider = str(node.providerName);
+      const provider = line(node.providerName);
       if (!provider) {
         continue;
       }
