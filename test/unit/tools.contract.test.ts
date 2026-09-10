@@ -264,6 +264,27 @@ describe("get_title", () => {
     expect(offers.map((offer: any) => offer.url)).toContain("https://watch.example.invalid/title");
   });
 
+  it("tells a caller why a game carries no streaming offers", async () => {
+    const result: any = await client.callTool({
+      name: "get_title",
+      arguments: {
+        slug: "cinder-vale",
+        kind: "game",
+        sections: ["basic", "networks", "production", "where_to_watch"],
+      },
+    });
+
+    const out = result.structuredContent;
+    expect(out.where_to_watch, "the section was asked for, so it is answered").toEqual([]);
+    expect(
+      out.notes.join(" "),
+      "an empty list on its own would read as a game nobody streams",
+    ).toContain("Streaming offers do not apply to games.");
+
+    const text = result.content.map((part: any) => part.text).join("\n");
+    expect(text).toContain("Where to watch: nothing listed.");
+  });
+
   it("gates the payload on the sections asked for: scores alone carries no entry text", async () => {
     const result: any = await client.callTool({
       name: "get_title",
@@ -271,11 +292,21 @@ describe("get_title", () => {
     });
 
     const out = result.structuredContent;
-    expect(out.description, "description belongs to 'basic'").toBeNull();
-    expect(out.genres).toEqual([]);
-    expect(out.duration_minutes).toBeNull();
-    expect(out.imdb_id).toBeNull();
-    expect(out.total_chars).toBe(0);
+    // An empty list and a zero are statements about what Metacritic holds, and
+    // only a section that was asked for can make one.
+    for (const key of [
+      "description",
+      "tagline",
+      "genres",
+      "duration_minutes",
+      "imdb_id",
+      "total_chars",
+      "returned_chars",
+      "next_offset",
+      "truncated",
+    ]) {
+      expect(out, `${key} belongs to 'basic', which was not asked for`).not.toHaveProperty(key);
+    }
     expect(out.critic_score.score, "the section that was asked for is still served").toBe(73);
   });
 
@@ -547,8 +578,9 @@ describe("the text mirror", () => {
 
     const text = textOf(result);
     expect(text.length).toBeLessThanOrEqual(2000);
-    expect(text.endsWith("https://www.metacritic.com/movie/blue-horizon/")).toBe(true);
-    expect(text).toContain("Source: Metacritic");
+    expect(
+      text.endsWith("Source: Metacritic (https://www.metacritic.com/movie/blue-horizon/)"),
+    ).toBe(true);
   });
 
   it("carries the notes into the text, not only into the structured payload", async () => {
