@@ -14,9 +14,9 @@ page is not a channel: nothing posted there reaches me.
 ## Pull requests are welcome, but talk to me first
 
 Please open an issue before you write the code, even when you are sure of the
-fix. Not to gate you: to agree on what the right answer actually is. Most of
-the decisions in this repository are about what a model should be told, and two
-reasonable people land on different answers. A short exchange up front is
+fix, so we agree on what the right answer actually is. Most of the decisions in
+this repository are about what a model should be told, and two reasonable
+people land on different answers. A short exchange up front is
 cheaper for you than a rewrite after review.
 
 The exception is the obviously mechanical: a typo, a dead link, a wrong version

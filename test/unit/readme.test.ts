@@ -323,6 +323,28 @@ describe("the library example", () => {
   });
 });
 
+describe("what the privacy notice says a request carries", () => {
+  const privacy = readFileSync(join(ROOT, "PRIVACY.md"), "utf8");
+
+  it("shows the User-Agent this server actually sends", () => {
+    expect(
+      privacy,
+      "a notice quoting a format the code never emits describes a different server",
+    ).toContain(DEFAULT_USER_AGENT.replace(pkg.version, "<version>"));
+  });
+
+  it("names every lifetime the code holds an answer for", () => {
+    const settings = [...configSource.matchAll(/"(MC_[A-Z_]*CACHE[A-Z_]*TTL[A-Z_]*)"/g)].map(
+      (found) => found[1],
+    );
+
+    expect(settings.length, "the code reads at least one cache setting").toBeGreaterThan(0);
+    for (const name of new Set(settings)) {
+      expect(privacy, `${name} governs how long an answer is held`).toContain(name);
+    }
+  });
+});
+
 describe("the wording", () => {
   it("carries none of the turns of phrase this project refuses", () => {
     for (const [pattern, what] of REFUSED_WORDING) {

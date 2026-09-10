@@ -116,7 +116,8 @@ Finds films, series and games by title.
 
 **In return:** rows carrying `slug` and `kind`, which `get_title` and
 `get_reviews` take together; `title`; `year`; `release_date`; `rating`, the age
-rating as published; `metascore`; `user_score`; and `source_url`. **A score the
+rating as published; `metascore`; `user_score`, which the search route publishes
+for no row and which is null on every one of them; and `source_url`. **A score the
 site has not computed is `null`, never `0`:** on a scale that starts at zero the
 two would be indistinguishable, and a title with too few reviews carries none.
 
@@ -154,8 +155,10 @@ Reads the reviews of one entry.
 **In return:** `reviews`, each with its `quote` as published, its `score`, the
 `max` that score is out of, which is 100 for a critic and 10 for a user, and the
 `publication` that ran it. **Name the publication when quoting a review.**
-`total_available` counts the reviews matching the source and the sentiment asked
-for, and `next_offset` continues.
+`total_available` counts every review Metacritic holds from that source for the
+entry, whatever `sentiment` was asked for, since the sentiment sorts the sample
+this server received rather than the request that fetched it. `next_offset`
+continues.
 
 ### `browse_titles`
 
@@ -386,7 +389,8 @@ Trouve des films, des séries et des jeux par leur titre.
 
 **En retour :** des lignes portant `slug` et `kind`, que `get_title` et
 `get_reviews` reprennent ensemble ; `title` ; `year` ; `release_date` ; `rating`,
-la classification par âge telle que publiée ; `metascore` ; `user_score` ; et
+la classification par âge telle que publiée ; `metascore` ; `user_score`, que la
+route de recherche ne publie pour aucune ligne et qui y vaut `null` partout ; et
 `source_url`. **Une note que le site n'a pas calculée vaut `null`, jamais `0` :**
 sur une échelle qui commence à zéro les deux seraient indiscernables, et un titre
 avec trop peu de critiques n'en porte aucune.
@@ -425,9 +429,10 @@ Lit les critiques d'une fiche.
 **En retour :** `reviews`, chacune avec sa `quote` telle que publiée, son
 `score`, le `max` sur lequel cette note est donnée, qui vaut 100 pour un critique
 et 10 pour un utilisateur, et la `publication` qui l'a signée. **Nommez la
-publication quand vous citez une critique.** `total_available` compte les
-critiques correspondant à la source et à la tonalité demandées, et `next_offset`
-poursuit.
+publication quand vous citez une critique.** `total_available` compte toutes les
+critiques que Metacritic tient de cette source pour cette fiche, quelle que soit
+la tonalité demandée, puisque la tonalité trie l'échantillon reçu et non la
+requête qui l'a cherché. `next_offset` poursuit.
 
 ### `browse_titles`
 
