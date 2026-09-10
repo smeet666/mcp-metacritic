@@ -54,6 +54,19 @@ describe("the User-Agent this client sends", () => {
     );
   });
 
+  it("names this project once when the caller already names it", async () => {
+    const fetch = happyRouter();
+    await new McClient({
+      config: testConfig({ userAgent: `acme-research/2.0 ${DEFAULT_USER_AGENT}` }),
+      logger: silentLogger,
+      fetchImpl: fetch.impl,
+    }).search("blue horizon", 10, 0);
+
+    const sent = userAgentOf(fetch);
+    const occurrences = sent.split(DEFAULT_USER_AGENT).length - 1;
+    expect(occurrences, "a caller passing the identity back gets it once").toBe(1);
+  });
+
   it("keeps a browser User-Agent attributable by naming this project alongside", async () => {
     const fetch = happyRouter();
     await new McClient({

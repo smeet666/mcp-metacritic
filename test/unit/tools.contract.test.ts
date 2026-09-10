@@ -264,6 +264,27 @@ describe("get_title", () => {
     expect(offers.map((offer: any) => offer.url)).toContain("https://watch.example.invalid/title");
   });
 
+  it("tells a caller why a game carries no streaming offers", async () => {
+    const result: any = await client.callTool({
+      name: "get_title",
+      arguments: {
+        slug: "cinder-vale",
+        kind: "game",
+        sections: ["basic", "networks", "production", "where_to_watch"],
+      },
+    });
+
+    const out = result.structuredContent;
+    expect(out.where_to_watch, "the section was asked for, so it is answered").toEqual([]);
+    expect(
+      out.notes.join(" "),
+      "an empty list on its own would read as a game nobody streams",
+    ).toContain("Streaming offers do not apply to games.");
+
+    const text = result.content.map((part: any) => part.text).join("\n");
+    expect(text).toContain("Where to watch: nothing listed.");
+  });
+
   it("gates the payload on the sections asked for: scores alone carries no entry text", async () => {
     const result: any = await client.callTool({
       name: "get_title",
