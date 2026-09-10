@@ -105,7 +105,8 @@ export type Sentiment = "all" | "positive" | "neutral" | "negative";
 export interface ReviewPage<T> {
   reviews: T[];
   /** How many exist upstream, before limit and offset. */
-  totalResults: number;
+  /** What the site counted, or null where it published no count. */
+  totalResults: number | null;
   /** How many entries the response carried, which paging must advance by. */
   itemCount: number;
 }
@@ -119,6 +120,7 @@ export interface WatchOffer {
 
 export interface TitlePage {
   titles: TitleSummary[];
-  totalResults: number;
+  /** What the site counted, or null where it published no count. */
+  totalResults: number | null;
   itemCount: number;
 }

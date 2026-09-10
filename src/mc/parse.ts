@@ -217,7 +217,7 @@ export function parseTitlePage(raw: string, url: string, what: string): TitlePag
 
   return {
     titles,
-    totalResults: intOf(data[FIELD.totalResults]) ?? titles.length,
+    totalResults: intOf(data[FIELD.totalResults]),
     itemCount: items.length,
   };
 }
@@ -356,10 +356,15 @@ export function parseScore(raw: string, url: string, what: string): ScoreSummary
     throw parseFailure(url, "the score carries no scale");
   }
 
+  const reviewCount = intOf(item.reviewCount);
+
   return {
-    score: aggregate(item.score),
+    // A zero here is read against what stands behind it. An entry nobody has
+    // rated is published as 0 out of 10 from 0 ratings, which is an absence; a
+    // zero with reviews counted behind it is a verdict those reviewers gave.
+    score: reviewCount ? num(item.score) : aggregate(item.score),
     max,
-    reviewCount: intOf(item.reviewCount),
+    reviewCount,
     positiveCount: intOf(item.positiveCount),
     neutralCount: intOf(item.neutralCount),
     negativeCount: intOf(item.negativeCount),
@@ -419,7 +424,7 @@ export function parseCriticReviews(
 
   return {
     reviews,
-    totalResults: intOf(data[FIELD.totalResults]) ?? reviews.length,
+    totalResults: intOf(data[FIELD.totalResults]),
     itemCount: bucket.length,
   };
 }
@@ -451,7 +456,7 @@ export function parseUserReviews(
 
   return {
     reviews,
-    totalResults: intOf(data[FIELD.totalResults]) ?? reviews.length,
+    totalResults: intOf(data[FIELD.totalResults]),
     itemCount: bucket.length,
   };
 }

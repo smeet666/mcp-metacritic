@@ -121,10 +121,13 @@ export async function runBrowseTitles(
       orderedBy(args.sort),
     ].join("");
 
+    // The site publishes no count on some pages, and "3 of null" would put a
+    // number in front of a reader that nobody wrote.
+    const outOf = data.totalResults === null ? "" : ` of ${data.totalResults}`;
     const summary =
       results.length === 0
         ? `No rows for ${heading}.`
-        : `${results.length} of ${data.totalResults} ${heading}:\n${renderTitleList(results)}`;
+        : `${results.length}${outOf} ${heading}:\n${renderTitleList(results)}`;
 
     return ok(
       {
