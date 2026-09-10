@@ -144,7 +144,11 @@ export async function runGetReviews(client: McClient, args: GetReviewsArgs): Pro
         `${data.itemCount - data.reviews.length} entries in the sample could not be attributed and were skipped.`,
       );
     }
-    if (data.totalResults > data.reviews.length) {
+    if (data.totalResults === null) {
+      notes.push(
+        "Metacritic published no count of the reviews it holds for this entry, so the length of this sample is not evidence of how many exist.",
+      );
+    } else if (data.totalResults > data.reviews.length) {
       const slice = args.sentiment === "all" ? "" : ` in the ${args.sentiment} slice`;
       notes.push(
         `Metacritic counts ${data.totalResults} ${args.source} reviews for this entry and serves ${data.reviews.length}${slice} here. The rest are only on the website: ${sourceUrl}`,

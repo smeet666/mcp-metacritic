@@ -82,6 +82,21 @@ export async function runSearchTitles(
     if (cached) {
       notes.push("Served from this server's short-lived in-memory cache.");
     }
+    // A row the site sent in a shape this server cannot read is dropped, and a
+    // list shorter than the window without a word about it reads as a catalogue
+    // holding that much.
+    if (data.itemCount > data.titles.length) {
+      notes.push(
+        `${data.itemCount - data.titles.length} entries in this page could not be read and were skipped.`,
+      );
+    }
+    // The count belongs to the query and not to the kind the caller narrowed
+    // to, since Metacritic counts before this server filters.
+    if (args.kind !== "any" && data.totalResults !== null) {
+      notes.push(
+        `total_available counts every kind Metacritic matched for this query, and the rows here are the ${args.kind}s among them.`,
+      );
+    }
 
     // A query of several words is counted loosely upstream: "the matrix" reports
     // over 55 000 entries because it counts anything matching either word. Saying
@@ -91,6 +106,10 @@ export async function runSearchTitles(
     if (looseCount) {
       notes.push(
         "Metacritic counts a multi-word query loosely, so total_available is far larger than the number of real matches. The rows themselves are ordered by relevance.",
+      );
+    } else if (data.totalResults === null) {
+      notes.push(
+        "Metacritic published no count of what this search matched, so a short list here is not evidence that little exists.",
       );
     } else if (data.totalResults > results.length) {
       notes.push(
