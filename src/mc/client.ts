@@ -79,6 +79,13 @@ function withGuarantees(config: Config): Config {
 }
 
 export class McClient {
+  /**
+   * The reads that have gone out and not come back, by URL.
+   *
+   * A route answering several variants is read once, so this is keyed on the
+   * URL rather than on the cache key a variant makes.
+   */
+  private readonly reading = new Map<string, Promise<string>>();
   private readonly config: Config;
   private readonly logger: Logger;
   private readonly limiter: RateLimiter;
@@ -128,7 +135,12 @@ export class McClient {
     offset: number;
   }): Promise<Outcome<TitlePage>> {
     const url = browseUrl(options);
-    return await this.fetchParsed(url, this.catalogueCache, (body) =>
+    // A ranking by attention or by release date is what it is at the moment it
+    // is read, and the catalogue lifetime would serve yesterday's under a
+    // heading that says current. Only the score ranking moves at the pace the
+    // catalogue does.
+    const cache = options.sort === "score" ? this.catalogueCache : this.scoresCache;
+    return await this.fetchParsed(url, cache, (body) =>
       parseTitlePage(body, url, `that ${options.kind} listing`),
     );
   }
@@ -228,12 +240,30 @@ export class McClient {
       return { data: hit as T, cached: true };
     }
 
-    const body = await fetchText(url, {
+    // Two questions asked together both miss the cache, since neither has an
+    // answer to put in it yet. The read in flight is what the second one waits
+    // for, so one question costs the site one request however many callers ask
+    // it at once.
+    const inFlight = this.reading.get(url);
+    if (inFlight) {
+      const body = await inFlight;
+      return { data: parse(body), cached: true };
+    }
+
+    const reading = fetchText(url, {
       config: this.config,
       limiter: this.limiter,
       logger: this.logger,
       ...(this.fetchImpl ? { fetchImpl: this.fetchImpl } : {}),
     });
+    this.reading.set(url, reading);
+
+    let body: string;
+    try {
+      body = await reading;
+    } finally {
+      this.reading.delete(url);
+    }
 
     const data = parse(body);
     cache.set(key, data);
