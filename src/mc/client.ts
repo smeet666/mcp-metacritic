@@ -68,10 +68,13 @@ function withGuarantees(config: Config): Config {
   const userAgent = config.userAgent.includes(DEFAULT_USER_AGENT)
     ? config.userAgent
     : `${config.userAgent} ${DEFAULT_USER_AGENT}`;
+  // NaN travels through Math.max and comes out the other side, which would
+  // switch pacing off for a caller who built their config by hand.
+  const asked = Number.isFinite(config.minIntervalMs) ? config.minIntervalMs : 0;
   return {
     ...config,
     userAgent,
-    minIntervalMs: Math.max(MIN_ALLOWED_INTERVAL_MS, config.minIntervalMs),
+    minIntervalMs: Math.max(MIN_ALLOWED_INTERVAL_MS, asked),
   };
 }
 
