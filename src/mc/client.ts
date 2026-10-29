@@ -245,7 +245,7 @@ export class McClient {
     // for, so one question costs the site one request however many callers ask
     // it at once.
     const inFlight = this.reading.get(url);
-    if (inFlight) {
+    if (inFlight !== undefined) {
       const body = await inFlight;
       return { data: parse(body), cached: true };
     }
